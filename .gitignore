@@ -18,3 +18,5 @@ GPATH
 GRTAGS
 GTAGS
 tags
+auto-scripts/enb/rfsim-S1-enb2/enb.conf
+auto-scripts/enb/rfsim-S1-enb1/enb.conf
