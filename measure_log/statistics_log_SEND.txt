@@ -1,0 +1,98 @@
+==========================the 1 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 2 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 3 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 4 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 5 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 6 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 7 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 8 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 9 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 10 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 11 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 12 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 13 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 14 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 15 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 16 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 17 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 18 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 19 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 20 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 21 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 22 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 23 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 24 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+==========================the 25 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 0 1 1     117012.00	    79.60
+==========================the 26 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 0 1 1     134358.00	    91.40
+==========================the 27 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 0 1 1      14112.00	     9.60
+==========================the 28 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 1 0 1             0	        0
+==========================the 29 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 2 0 1             0	        0
+==========================the 30 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 3 0 1             0	        0
+==========================the 31 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 4 0 1             0	        0
+==========================the 32 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 5 0 1             0	        0
+==========================the 33 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 6 0 1             0	        0
+==========================the 34 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 7 0 1             0	        0
+==========================the 35 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 8 0 1             0	        0
+==========================the 36 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 9 0 1             0	        0
+==========================the 37 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 10 0 1             0	        0
+==========================the 38 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 11 0 1             0	        0
+==========================the 39 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 12 0 1             0	        0
+  2 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    52094	     5001	 0 1 1      37044.00	    25.20
+==========================the 40 statisics============================
+index		Src IP		  Dst IP	Protocolt	Src port	Dst port	Total Byte	Total Packet
+  1 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    56017	     5001	 13 0 1             0	        0
+  2 :       172. 16.  0.  2   172. 16.  0.  4     UDP	    52094	     5001	 0 1 1     120834.00	    82.20

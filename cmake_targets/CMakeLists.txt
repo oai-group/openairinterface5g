@@ -2182,14 +2182,42 @@ set (MISC_NFAPI_NR
 add_library(MISC_NFAPI_NR_LIB
   ${MISC_NFAPI_NR}
  )
+
+#  measure part
+############################################################################
+set(MEASURE_PART
+  ${OPENAIR_DIR}/measure/parser.c
+  ${OPENAIR_DIR}/measure/BoBHash32.c
+  ${OPENAIR_DIR}/measure/HeavyPart.c
+  ${OPENAIR_DIR}/measure/LightPart.c
+  ${OPENAIR_DIR}/measure/ElasticSketch.c
+  ${OPENAIR_DIR}/measure/measure_log.c
+  ${OPENAIR_DIR}/measure/hash.c
+  # ${OPENAIR_DIR}/measure/CMSketch.c
+  ${OPENAIR_DIR}/measure/measure_timer.c
+  ${OPENAIR_DIR}/measure/myHashSet.c
+  ${OPENAIR_DIR}/measure/myList.c
+  # ${OPENAIR_DIR}/measure/params.h
+  )
+
+include_directories(${OPENAIR_DIR}/measure)
+
+#LINK_LIBRARIES(${OPENAIR_DIR}/measure/libmysqlclient.so)
+
+
+############################################################################
+
 add_library(L2
   ${L2_SRC}
   ${MAC_SRC}
   ${ENB_APP_SRC}
   ${MCE_APP_SRC}
+  ${MEASURE_PART}
   )
 add_dependencies(L2 rrc_flag s1ap_flag x2_flag m2_flag m3_flag)
-
+####################
+target_link_libraries(L2 ${OPENAIR_DIR}/measure/libmysqlclient.so)
+#####################
 add_library(MAC_NR
   ${MAC_NR_SRC}
   )
