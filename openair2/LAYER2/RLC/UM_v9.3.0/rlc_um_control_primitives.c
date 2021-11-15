@@ -337,11 +337,11 @@ rlc_um_cleanup (
   rlc_um_entity_t *const rlc_pP) {
   int             index;
   // TX SIDE
-  list_free (&rlc_pP->pdus_to_mac_layer);
+  enb_list_free (&rlc_pP->pdus_to_mac_layer);
   pthread_mutex_destroy(&rlc_pP->lock_input_sdus);
-  list_free (&rlc_pP->input_sdus);
+  enb_list_free (&rlc_pP->input_sdus);
   // RX SIDE
-  list_free (&rlc_pP->pdus_from_mac_layer);
+  enb_list_free (&rlc_pP->pdus_from_mac_layer);
 
   if ((rlc_pP->output_sdu_in_construction)) {
     free_mem_block (rlc_pP->output_sdu_in_construction, __func__);

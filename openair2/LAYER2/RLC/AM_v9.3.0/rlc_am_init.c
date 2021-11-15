@@ -108,9 +108,9 @@ rlc_am_reestablish(
 //#warning TODO when possible reassemble RLC SDUs from any byte segments of AMD PDUs with SN inf VR(MR)
   list2_free(&rlc_pP->receiver_buffer);
 
-  list_free(&rlc_pP->pdus_to_mac_layer);
-  list_free(&rlc_pP->control_pdu_list);
-  list_free(&rlc_pP->segmentation_pdu_list);
+  enb_list_free(&rlc_pP->pdus_to_mac_layer);
+  enb_list_free(&rlc_pP->control_pdu_list);
+  enb_list_free(&rlc_pP->segmentation_pdu_list);
 
 
   // TX state variables
@@ -145,9 +145,9 @@ rlc_am_cleanup(
 )
 {
   list2_free(&rlc_pP->receiver_buffer);
-  list_free(&rlc_pP->pdus_to_mac_layer);
-  list_free(&rlc_pP->control_pdu_list);
-  list_free(&rlc_pP->segmentation_pdu_list);
+  enb_list_free(&rlc_pP->pdus_to_mac_layer);
+  enb_list_free(&rlc_pP->control_pdu_list);
+  enb_list_free(&rlc_pP->segmentation_pdu_list);
 
 
   if (rlc_pP->output_sdu_in_construction != NULL) {

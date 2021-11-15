@@ -110,7 +110,7 @@ rlc_tm_cleanup (
 {
   int             index;
   // TX SIDE
-  list_free (&rlcP->pdus_to_mac_layer);
+  enb_list_free (&rlcP->pdus_to_mac_layer);
 
   if (rlcP->input_sdus_alloc) {
     for (index = 0; index < rlcP->size_input_sdus_buffer; index++) {

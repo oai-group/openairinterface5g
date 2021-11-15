@@ -51,7 +51,7 @@
 
 //-----------------------------------------------------------------------------
 void         list_init (list_t* , char *);
-void         list_free (list_t* listP);
+void         enb_list_free (list_t* listP);
 mem_block_t* list_get_head (list_t*);
 mem_block_t* list_remove_head (list_t* );
 mem_block_t* list_remove_element (mem_block_t*, list_t*);

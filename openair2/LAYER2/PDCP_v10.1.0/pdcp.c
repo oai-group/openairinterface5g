@@ -2511,7 +2511,7 @@ void pdcp_layer_init(void)
 void pdcp_layer_cleanup (void)
 //-----------------------------------------------------------------------------
 {
-  //list_free (&pdcp_sdu_list);
+  //enb_list_free (&pdcp_sdu_list);
   while(pollNotifiedFIFO(&pdcp_sdu_list)) {};
   hashtable_destroy(&pdcp_coll_p);
 #ifdef MBMS_MULTICAST_OUT

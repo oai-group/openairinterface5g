@@ -216,7 +216,7 @@ rlc_um_rx (const protocol_ctxt_t *const ctxt_pP, void *argP, struct mac_data_ind
         }
       }/*MESSAGE_CHART_GENERATOR*/
 
-      list_free (&data_indP.data);
+      enb_list_free (&data_indP.data);
       break;
 
     case RLC_DATA_TRANSFER_READY_STATE:
@@ -357,14 +357,14 @@ rlc_um_rx (const protocol_ctxt_t *const ctxt_pP, void *argP, struct mac_data_ind
       //   upper layers.
       LOG_I(RLC, PROTOCOL_RLC_UM_CTXT_FMT" RLC_LOCAL_SUSPEND_STATE\n",
             PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,l_rlc_p));
-      list_free (&data_indP.data);
+      enb_list_free (&data_indP.data);
       break;
 
     default:
       LOG_E(RLC, PROTOCOL_RLC_UM_CTXT_FMT" TX UNKNOWN PROTOCOL STATE %02X hex\n",
             PROTOCOL_RLC_UM_CTXT_ARGS(ctxt_pP,l_rlc_p),
             l_rlc_p->protocol_state);
-      list_free (&data_indP.data);
+      enb_list_free (&data_indP.data);
   }
 }
 

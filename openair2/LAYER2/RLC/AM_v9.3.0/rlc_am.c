@@ -441,7 +441,7 @@ rlc_am_rx (
   switch (rlc->protocol_state) {
     case RLC_NULL_STATE:
       LOG_I(RLC, PROTOCOL_RLC_AM_CTXT_FMT" ERROR MAC_DATA_IND IN RLC_NULL_STATE\n", PROTOCOL_RLC_AM_CTXT_ARGS(ctxt_pP, rlc));
-      list_free (&data_indP.data);
+      enb_list_free (&data_indP.data);
       break;
 
     case RLC_DATA_TRANSFER_READY_STATE:
@@ -450,7 +450,7 @@ rlc_am_rx (
 
     default:
       LOG_E(RLC, PROTOCOL_RLC_AM_CTXT_FMT" TX UNKNOWN PROTOCOL STATE 0x%02X\n", PROTOCOL_RLC_AM_CTXT_ARGS(ctxt_pP, rlc), rlc->protocol_state);
-      list_free (&data_indP.data);
+      enb_list_free (&data_indP.data);
   }
 }
 
