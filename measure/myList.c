@@ -50,6 +50,8 @@ void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
     node->isReceived = 1;
     node->notReceived = 0;
     node->totalTime = 0;
+
+    node->delayInfo = NULL;
     if (list->count)
     {
         list->last->next = node;
@@ -166,9 +168,14 @@ void* myListRemoveDataAtFirst(MyList *  list)
     MyNode *p = list->first;
     list->first = p->next;
     void * re = p->data;
+    // printf("快要free了\n\n");
     if(p->delayInfo)
+        // printf("竟然free了\n\n");
         free(p->delayInfo);
+    // printf("free完成了\n\n");
+    // printf("快要free p了\n\n");
     free(p);
+    // printf("free p完成了\n\n");
     (list->count)--;
     if (list->count == 0)
     {
@@ -177,33 +184,6 @@ void* myListRemoveDataAtFirst(MyList *  list)
     return re;
 }
  
-//插入
-// void myListInsertDataAt(MyList *  list, void*  data, int index)
-// {
-//     if (index == 0)
-//     {
-//         myListInsertDataAtFirst(list, data);
-//         return;
-//     }
-//     if (index == list->count)
-//     {
-//         myListInsertDataAtLast(list, data);
-//         return;
-//     }
-//     MyNode * node = (MyNode *) malloc(sizeof(MyNode));
-//     node->data = data;
-//     node->next = NULL;
- 
-//     MyNode * p = list->first;
-//     for (int i = 0; i < index - 1; i++)
-//     {
-//         p = p->next;
-//     }
-//     node->next = p->next;
-//     p->next = node;
- 
-//     (list->count)++;
-// }
  
 //删除
 void* myListRemoveDataAt(MyList*  list, int index)

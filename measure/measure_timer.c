@@ -73,15 +73,22 @@ void* print_current_time(void* argv){
     char query4[100] = "truncate table total_recv";
     mysql_real_query(conn_ptr,"truncate table total_recv",strlen(query4));
     printf("have clear table measure, total in mytestdb\n");
-
+    char buf[ 1024 ];
+    getcwd(buf, 1024);
+    printf("\n");
+    printf("%s\n", buf);
+    printf("\n");
 
 
     time_t now;
     struct tm* timenow;
     //清空文件
     FILE *fp, *fp2;
-    fp = fopen(STATISTICS_LOG_FILE_RECV,"w+");
-    fp2 = fopen(STATISTICS_LOG_FILE_SEND,"w+");
+    fp = fopen(STATISTICS_LOG_FILE_RECV,"wb+");
+    fp2 = fopen(STATISTICS_LOG_FILE_SEND,"wb+");
+    fprintf(fp,"=====================================================================\n");
+    fprintf(fp2,"===================================================================\n");
+
     fclose(fp);
     fclose(fp2);
 
