@@ -15,14 +15,16 @@
 #include <math.h>
 #include <sys/socket.h>
 
-#define RESULT_LOG_FILE "/home/enb1/openairinterface5g/measure_log/results_log.txt"
-#define TIMER_LOG_FILE "/home/enb1/openairinterface5g/measure_log/timer_log.txt"
-#define STATISTICS_LOG_FILE_SEND "/home/enb1/openairinterface5g/measure_log/statistics_log_SEND.txt"
-#define STATISTICS_LOG_FILE_RECV "/home/enb1/openairinterface5g/measure_log/statistics_log_RECV.txt"
-// #define RESULT_LOG_FILE "../measure_log/results_log.txt"
-// #define TIMER_LOG_FILE "../measure_log/timer_log.txt"
-// #define STATISTICS_LOG_FILE_SEND "../measure_log/statistics_log_SEND.txt"
-// #define STATISTICS_LOG_FILE_RECV "../measure_log/statistics_log_RECV.txt"
+
+// #define RESULT_LOG_FILE "/home/enb/openairinterface5g/measure_log/results_log.txt"
+// #define TIMER_LOG_FILE "/home/enb/openairinterface5g/measure_log/timer_log.txt"
+// #define STATISTICS_LOG_FILE_SEND "/home/enb/openairinterface5g/measure_log/statistics_log_SEND.txt"
+// #define STATISTICS_LOG_FILE_RECV "/home/enb/openairinterface5g/measure_log/statistics_log_RECV.txt"
+
+#define RESULT_LOG_FILE "../../../measure_log/results_log.txt"
+#define TIMER_LOG_FILE "../../../measure_log/timer_log.txt"
+#define STATISTICS_LOG_FILE_SEND "../../../measure_log/statistics_log_SEND.txt"
+#define STATISTICS_LOG_FILE_RECV "../../../measure_log/statistics_log_RECV.txt"
 
 typedef struct delNode
 {
