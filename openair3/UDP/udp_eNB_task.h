@@ -94,4 +94,9 @@ void *udp_eNB_task(void *args_p);
  */
 int udp_enb_init(void);
 
+/*
+* 获取时间戳的函数
+*/
+uint64_t getTimeUsec(void);
+
 #endif /* UDP_ENB_TASK_H_ */
