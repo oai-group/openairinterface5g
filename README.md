@@ -178,5 +178,5 @@ python3 main.py
 
       ```shell
       # 请将eNB_IP替换成eNB的IP地址
-      sudo ./auto-run-enb.sh -a eNB_IP
+      sudo ./auto-run-ue.sh -a eNB_IP
       ```
