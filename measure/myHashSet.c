@@ -274,7 +274,7 @@ int myHashSetGetSendPLRFlag(MyHashSet *  set, uint8_t*  flow_key)
 
     if (re == NULL)
     {
-        myListInsertPLRDataAtLast(set->dataList[hasCode], data, flag);
+        myListInsertSendPLRDataAtLast(set->dataList[hasCode], data);
         (set->size)++;
         free(data);
         return 0;
