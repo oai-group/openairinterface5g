@@ -77,6 +77,32 @@ int sock;
 uint8_t curr_eNB_id;
 ///////////////////////////////////////////
 
+// 计算校验和的函数
+uint16_t check_ip_sum(uint16_t* buffer, int size)
+{
+    unsigned long cksum = 0;
+    while(size>1)
+    {
+        cksum += *buffer++;
+        size -= sizeof(uint16_t);
+    }
+    if(size)
+    {
+        cksum += *(uint16_t*)buffer;
+    }
+    cksum = (cksum>>16) + (cksum&0xffff); 
+    cksum += (cksum>>16); 
+    return (uint16_t)(~cksum);
+}
+
+// 获取时间戳的函数
+uint64_t getTimeUsec()
+{
+    struct timeval t;
+    gettimeofday(&t, 0);
+    return (uint64_t)((uint64_t)(t.tv_sec) * 1000 * 1000 + t.tv_usec);
+}
+
 #define IPV4_ADDR    "%u.%u.%u.%u"
 #define IPV4_ADDR_FORMAT(aDDRESS)               \
     (uint8_t)((aDDRESS)  & 0x000000ff),         \
@@ -299,6 +325,11 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       measure_packet((char *)&udp_data_ind_p->buffer[8], 
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
+      // 调用接收程序丢弃时间戳数据包
+      int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+      if(flag){
+        return;
+      }
 
 #if defined(LOG_UDP) && LOG_UDP > 0
       LOG_I(UDP_, "Msg of length %d received from %s:%u\n",
@@ -330,6 +361,215 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
   //pthread_mutex_unlock(&udp_socket_list_mutex);
 }
 
+/*
+ * 将数据包复制一份然后添加时间戳信息
+ */
+uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
+  uint8_t time_flag;      // ip头部服务类型的保留位 标志位 表示这个包里面是时间戳信息
+  uint16_t udp_length;    // 数据改为时间戳后的udp头部和数据部分的总的长度 
+  uint16_t ip_length;    // 数据改为时间戳后的ip头部和数据部分的总的长度 
+  uint16_t ip_header[10];  // 提取出来的ip头部 用于计算新的校验和 原始 uint8_t ip_header[20]
+  uint16_t new_checksum;  // 计算出来的新的校验和
+  // 时间戳信息
+  uint64_t current_millisecond;
+  // 定义变量time_stamp_count：表示存放的时间戳数量 每次运行+1
+  uint8_t time_stamp_count = 1;
+
+  // 随机概率选择需要存储当前的流信息 复制当前流
+  // 发送时间戳的函数
+  // 将ip的头部TOS的保留位设置为1(默认为0)表示这是一个时间戳的数据包 TOS 在第8位到16位公8位一个字节，最后一位16位为保留位
+  time_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
+  LOG_D(UDP_, "before time_flag: %x\n", time_flag);
+  time_flag = time_flag | 0x01;   // 把最后一位保留位变成1
+  LOG_D(UDP_, "after time_flag: %x\n", time_flag);
+
+  // 获取当前的时间戳信息
+  current_millisecond = getTimeUsec();
+  LOG_D(UDP_, "current_millisecond: %lx\n", current_millisecond);
+
+  // 把时间戳的流标志位放到数据包中
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 9, &time_flag, 1);
+  LOG_D(UDP_, "udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9]: %x\n", udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9]);
+
+  // 把当前基站id和总的时间戳个数添加到数据部分
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 36, &time_stamp_count, 1);  // 添加时间戳个数
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 37, &curr_eNB_id, 1);  // 添加eNB设备id
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 38, &current_millisecond, 8); // 添加时间戳
+
+  // 将 UDP 头部中数据长度的部分改成 8 + i * 9 + 1 = 9 + 9 * i 字节 偏移 8 + 20 + 4 = 32 字节 (8-GTP   20-IP)
+  udp_length = (uint16_t)(time_stamp_count * 9 + 9);
+  udp_length = (udp_length >> 8) | (udp_length << 8);   // 更改大小端的操作
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 32, &udp_length, 2);
+
+  // 将 IP 头部中数据长度的部分改成20 + 8 + i * 9 + 1 = 29 + 9 * i字节(其中i为传输数据第一个字节：表示总共有多少个时间戳数据) 偏移8 + 2 = 10 （8-GTP长度）
+  ip_length = (uint16_t)(time_stamp_count * 9 + 29);
+  ip_length = (ip_length >> 8) | (ip_length << 8); 
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 10, &ip_length, 2);
+
+  // 重新计算ip头部校验和
+  memcpy(&ip_header, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8, 20);
+  // 将原来的校验和变为00
+  ip_header[5] = 0x0000;
+  // 使用check_ip_sum计算校验和 函数在最前面
+  new_checksum = check_ip_sum(ip_header, 20);
+  // 将新的校验和放到ip头部
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 18, &new_checksum, 2);
+
+  return current_millisecond;
+}
+
+/*
+ * 发送复制后的数据包
+ */
+int delay_measure_send(udp_data_req_t *udp_data_req_p,  
+                  MyHashSet *sendSet,struct sockaddr * peer_addr, int udp_sd){
+        // 解析ip数据
+        int flag = -1;
+        ssize_t send_timestamp; // 发送时间戳后返回的标志位
+        int is_ipv4_packet;
+        packet_key_t packet_key;
+        uint8_t flow_key[13]={'0'}; // 存五元组
+
+        is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key);  // is_ipv4_packet = 0; 表示ipv4
+        if (is_ipv4_packet == 0) {
+          packet_key_to_char(&packet_key, flow_key);
+          // 判断是否插入哈希表
+          flag = myHashSetAddSamplingData(sendSet, flow_key);
+        }
+
+        // 如果flag的话就插入
+        uint64_t current_millisecond;
+        if (flag == 1) {
+          current_millisecond = send_insert_timestamp(udp_data_req_p);
+        }
+        // 将复制的数据包发送出去
+        send_timestamp = sendto(
+                  udp_sd,
+                  &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],   // (const char*)current_time
+                  sizeof(current_millisecond) + 38,
+                  0,
+                  (struct sockaddr *)peer_addr,
+                  sizeof(struct sockaddr_in));
+
+        // 发送失败打印消息
+        // LOG_D(UDP_, sizeof(current_time));
+        // LOG_D(UDP_, "sizeof(current_time): %d, send_timestamp: %zd\n", sizeof(current_time), send_timestamp);
+        LOG_D(UDP_, "send_timestamp: %zd\n", send_timestamp);
+        if (send_timestamp != sizeof(current_millisecond) + 38) {
+          LOG_E(UDP_, "Sending current time: %ld failed! send_timestamp: %zd\n", current_millisecond, send_timestamp);
+        }
+
+
+        // 已经存完了表之后
+        MyHashSetIterator itt;
+        MyHashSetIterator * it = &itt;
+        it->index = 0;
+        it->set = sendSet;
+        it->current = sendSet->dataList[0]->first;
+        it->count = 0;
+        int x = 0;
+        while(myHashSetIteratorHasNext(it)) {
+            x++;
+
+            // printf("begin get node \n\n\n");
+            MyNode *node = myHashSetIteratorNext(it);
+
+        //        uint8_t *flow_key = node->data;
+            printf("\n%ld   \n", node->samplingData.lastSamplingTime);
+        }
+        return 0;
+}
+
+/*
+ * 接收复制的数据包 
+ */
+int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
+                      uint8_t *forwarded_buffer, MyHashSet *recvSet){
+  uint64_t current_millisecond;  // 当前时间
+  // uint64_t *p = NULL;
+  // 定义ip地址的变量指针
+  // uint8_t src_ip[4];
+  // uint8_t dst_ip[4];
+  // uint8_t protocol_type;
+  // uint16_t src_port, dst_port;
+
+  // 定义ip头部的结构体
+  packet_key_t packet_key;
+  int is_ipv4_packet;
+  uint8_t flow_key[13]={'0'}; // 存五元组
+
+
+  // 判断标志位 是否是复制的数据包
+  if ((udp_data_ind_p->buffer[9] & 0x01) == 0x01) {
+
+    // 获取当前时间
+    current_millisecond = getTimeUsec();
+    printf("current_millisecond : %ld\n", current_millisecond);
+
+    // 找到有多少个节点的时间戳信息
+    int time_count = (uint8_t)(udp_data_ind_p->buffer[36]);
+
+    // 解析ip数据
+    DelayData * dData = (DelayData *) malloc(sizeof(DelayData));
+    memset(dData, 0, sizeof(DelayData));
+
+    // 循环读取时间戳
+    for (int i = 0; i < time_count - 1; i++) {
+      LinkDelay linkDelay;
+      linkDelay.startNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * i]);
+      linkDelay.endNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * (i + 1)]);
+      linkDelay.delay = *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * (i + 1)]) - *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * i]);
+
+      dData->links[i] = linkDelay;
+    }
+    // 单独处理最后一个节点
+    LinkDelay linkDelay;
+    linkDelay.startNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * (time_count - 1)]);
+    linkDelay.endNode = curr_eNB_id;
+    linkDelay.delay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * (time_count - 1)]);
+    dData->links[time_count - 1] = linkDelay;
+
+    // 计算总的端到端的时延
+    dData->NodeToNodeDelay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38]);
+
+    is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_ind_p->buffer[8]), &packet_key);  // is_ipv4_packet = 0; 表示ipv4
+    printf("\n is_ipv4_packet : %d\n", is_ipv4_packet);
+
+    // 如果是ipv4的包
+    if (is_ipv4_packet == 0) {
+      packet_key_to_char(&packet_key, &flow_key);   
+      myHashSetAddDelayData(recvSet, flow_key, dData);
+
+      printf("\n");
+      MyHashSetIterator itt;
+      MyHashSetIterator * it = &itt;
+      it->index = 0;
+      it->set = recvSet;
+      it->current = recvSet->dataList[0]->first;
+      it->count = 0;
+      int x = 0;
+      while(myHashSetIteratorHasNext(it)) {
+          x++;
+
+          // printf("begin get node \n\n\n");
+          MyNode *node = myHashSetIteratorNext(it);
+
+  //        uint8_t *flow_key = node->data;
+          printf("%d   %d   %d   %d\n", node->delayInfo->NodeToNodeDelay,node->delayInfo->links[0].delay,
+                  node->delayInfo->links[0].startNode,node->delayInfo->links[0].endNode);
+      }
+      printf("\n");
+    }
+    
+    // 释放内存
+    LOG_W(UDP_, "Drop packets\n");
+    itti_free(TASK_UDP, message_p);
+    itti_free(TASK_UDP, forwarded_buffer);
+    return 1;
+  }
+  else return 0;
+
+}
 
 void *udp_eNB_task(void *args_p)
 {
@@ -459,7 +699,9 @@ void *udp_eNB_task(void *args_p)
         // 插入数据
         measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
                         &sendSet, sock, &send_mutex, &send_elastic_sketch);
-
+        // 调用复制数据包的程序发送复制后的数据包
+        delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
+		
         itti_free(ITTI_MSG_ORIGIN_ID(received_message_p), udp_data_req_p->buffer);
       }
       break;
