@@ -28,6 +28,21 @@ typedef struct samplingData{
     uint64_t lastSamplingTime;
 } SamplingData;
 
+typedef struct packetLossRateData
+{
+    // send
+    int sendFlag;
+    int sendCount;
+
+    //recv;
+    int recvFlag;
+    int recvCount;
+    int realRecv;
+    int shouldRecv;
+
+} PLRData;
+
+
 
  
 typedef struct myNode
@@ -50,7 +65,16 @@ typedef struct myNode
 
     // receive
     DelayData *delayInfo;
+
+
+
+
+    //PLR measure
+    PLRData plrData;
+
     struct myNode *next;
+
+
 } MyNode;
 
 
@@ -85,6 +109,9 @@ void freeMyList(MyList * list);
 void myListInsertDataAtLast(MyList*  list, uint8_t*  data);
 void myListInsertDelayDataAtLast(MyList*  list, uint8_t*  data, DelayData *delayInfo);
 void myListInsertSamplingDataAtLast(MyList *  list, uint8_t*  data);
+
+void myListInsertRecvPLRDataAtLast(MyList *  list, uint8_t*  data,int flag);
+void myListInsertSendPLRDataAtLast(MyList *  list, uint8_t*  data);
 
 
 void myListAddtDataToIndex(MyList *  list, uint8_t*  data,uint16_t len, int index,int sock);
