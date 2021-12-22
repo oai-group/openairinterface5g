@@ -53,6 +53,9 @@ int myHashSetAddData(MyHashSet *  set, uint8_t*  data);
 int myHashSetAddDelayData(MyHashSet *  set, uint8_t*  flow_key,  DelayData *delayInfo);
 int myHashSetAddSamplingData(MyHashSet *  set, uint8_t*  flow_key);
 
+int myHashSetAddRecvPLRData(MyHashSet *  set, uint8_t*  flow_key,int flag);
+int myHashSetGetSendPLRFlag(MyHashSet *  set, uint8_t*  flow_key);
+
 int setNodeClassified(MyHashSet *  set, uint8_t*  flow_key);
 int myHashSetIsClassified(MyHashSet *  set, uint8_t*  flow_key);
 // int myHashSetAddData(MyHashSet *  set, uint8_t*  data, uint16_t len, int sock);

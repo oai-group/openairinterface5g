@@ -36,7 +36,7 @@ void freeMyList(MyList * list)
     free(list);
 }
  
-//插入在尾部
+//插入在尾部,通常是新建的一个节点
 void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
 {
     
@@ -51,6 +51,13 @@ void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
     node->notReceived = 0;
     node->totalTime = 0;
 
+
+    //plr measure
+    memset(&node->plrData,0,sizeof(PLRData));
+
+
+
+
     node->delayInfo = NULL;
     if (list->count)
     {
@@ -64,7 +71,7 @@ void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
     }
     (list->count)++;
 }
-
+// 添加时延信息
 void myListInsertDelayDataAtLast(MyList *  list, uint8_t*  data, DelayData *delayInfo)
 {
     
@@ -96,19 +103,13 @@ void myListInsertDelayDataAtLast(MyList *  list, uint8_t*  data, DelayData *dela
 void myListInsertSamplingDataAtLast(MyList *  list, uint8_t*  data)
 {
 
-    // printf("begin malloc1 \n\n\n");
     MyNode * node = (MyNode *) malloc(sizeof(MyNode));
-    // printf("malloc done");
-    // node->data = data;
     memcpy(node->data,data,KEY_LENGTH);
     node->next = NULL;
     struct timeval t;
     gettimeofday(&t, 0);
     node->samplingData.lastSamplingTime = (uint64_t)((uint64_t)t.tv_sec * 1000 * 1000 + t.tv_usec);
-    // node->isClassified = 0;
-    // node->isReceived = 1;
-    // node->notReceived = 0;
-    // node->totalTime = 0;
+
     if (list->count)
     {
         list->last->next = node;
@@ -121,6 +122,67 @@ void myListInsertSamplingDataAtLast(MyList *  list, uint8_t*  data)
     }
     (list->count)++;
 }
+
+//recv端增加统计信息，在末尾，新建
+void myListInsertRecvPLRDataAtLast(MyList *  list, uint8_t*  data,int flag)
+{
+
+    MyNode * node = (MyNode *) malloc(sizeof(MyNode));
+    memcpy(node->data,data,KEY_LENGTH);
+    node->next = NULL;
+
+    //plr measure
+    memset(&node->plrData,0,sizeof(PLRData));
+    node->plrData.recvCount += 1;
+    node->plrData.realRecv += 1;
+
+    
+
+
+
+    if (list->count)
+    {
+        list->last->next = node;
+        list->last = node;
+    }
+    else
+    {
+        list->first = node;
+        list->last = node;
+    }
+    (list->count)++;
+}
+
+void myListInsertSendPLRDataAtLast(MyList *  list, uint8_t*  data)
+{
+
+    MyNode * node = (MyNode *) malloc(sizeof(MyNode));
+    memcpy(node->data,data,KEY_LENGTH);
+    node->next = NULL;
+
+    //plr measure
+    memset(&node->plrData,0,sizeof(PLRData));
+    node->plrData.sendCount = 1;
+    node->plrData.sendFlag = 0;
+    if (list->count)
+    {
+        list->last->next = node;
+        list->last = node;
+    }
+    else
+    {
+        list->first = node;
+        list->last = node;
+    }
+    (list->count)++;
+}
+
+
+
+
+
+
+
  
 //长度
 int myListGetSize( MyList *  list)

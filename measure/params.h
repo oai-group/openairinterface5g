@@ -44,6 +44,8 @@
 #define TIMEOUTSLOT (20)
 // 偏移
 #define SHIFT 8
+// PLR测量染色间隔
+#define COLORSLOT 5
 
 //到达时间类型，可以自己更改
 //但是如果不是结果体，需要更改算法中的赋值操作(=)为内存拷贝(memcpy)

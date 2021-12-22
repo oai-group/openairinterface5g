@@ -224,6 +224,76 @@ int myHashSetAddSamplingData(MyHashSet *  set, uint8_t*  flow_key)
     }
 
 }
+//recv端插入统计信息
+int myHashSetAddRecvPLRData(MyHashSet *  set, uint8_t*  flow_key,int flag)
+{  
+    uint8_t *data = (uint8_t *) malloc(sizeof(uint8_t)*13);
+    memcpy(data, flow_key, 13);
+    int hasCode = (*(set->hashCode))(data);
+    hasCode %= set->initialCapacity;
+    if (hasCode<0)
+        hasCode+=set->initialCapacity;
+    MyNode * re = myListFindDataIndex(set->dataList[hasCode], data);
+
+
+    if (re == NULL)
+    {
+        myListInsertRecvPLRDataAtLast(set->dataList[hasCode], data, flag);
+        // MyNode *node = set->dataList[hasCode]->first;
+        (set->size)++;
+        free(data);
+        return 1;
+    }
+    else{
+        if(re->plrData.recvFlag!=flag){
+            //换颜色
+            re->plrData.realRecv += (re->plrData.recvCount > COLORSLOT)? COLORSLOT:re->plrData.recvCount; 
+            re->plrData.recvCount = 1;
+            re->plrData.recvFlag = flag;
+            re->plrData.shouldRecv += COLORSLOT;
+        }else{
+            re->plrData.recvCount += 1;
+        }
+        // re->isReceived = 1;
+    }
+    free(data);
+    return 0;
+}
+
+//send端返回PLR测量的标志位
+int myHashSetGetSendPLRFlag(MyHashSet *  set, uint8_t*  flow_key)
+{  
+    uint8_t *data = (uint8_t *) malloc(sizeof(uint8_t)*13);
+    memcpy(data, flow_key, 13);
+    int hasCode = (*(set->hashCode))(data);
+    hasCode %= set->initialCapacity;
+    if (hasCode<0)
+        hasCode+=set->initialCapacity;
+    MyNode * re = myListFindDataIndex(set->dataList[hasCode], data);
+
+
+    if (re == NULL)
+    {
+        myListInsertPLRDataAtLast(set->dataList[hasCode], data, flag);
+        (set->size)++;
+        free(data);
+        return 0;
+    }
+    else{
+        re->plrData.sendCount += 1;
+        if(re->plrData.sendCount > COLORSLOT){
+            re->plrData.sendFlag ^= 1;
+            re->plrData.sendCount = 1;
+        }
+        free(data);
+        return re->plrData.sendFlag;
+    }
+}
+
+
+
+
+
 
 
 int setNodeClassified(MyHashSet *  set, uint8_t*  flow_key)
