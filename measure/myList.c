@@ -55,10 +55,9 @@ void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
     //plr measure
     memset(&node->plrData,0,sizeof(PLRData));
 
-
-
-
     node->delayInfo = NULL;
+
+
     if (list->count)
     {
         list->last->next = node;
@@ -133,8 +132,7 @@ void myListInsertRecvPLRDataAtLast(MyList *  list, uint8_t*  data,int flag)
 
     //plr measure
     memset(&node->plrData,0,sizeof(PLRData));
-    node->plrData.recvCount += 1;
-    node->plrData.realRecv += 1;
+    node->plrData.recvCount = 1;
 
     
 
@@ -152,7 +150,7 @@ void myListInsertRecvPLRDataAtLast(MyList *  list, uint8_t*  data,int flag)
     }
     (list->count)++;
 }
-
+//recv端获取Flag信息，在末尾，新建
 void myListInsertSendPLRDataAtLast(MyList *  list, uint8_t*  data)
 {
 
