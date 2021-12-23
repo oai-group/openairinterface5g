@@ -50,7 +50,7 @@ void* print_current_time(void* argv){
 	{
 		printf("Options Set ERRO!\n");
 	}
-	conn_ptr = mysql_real_connect(conn_ptr,"localhost","root","123456","mytestdb",0,NULL,0);//连接MySQL testdb数据库
+	conn_ptr = mysql_real_connect(conn_ptr,"127.0.0.1","root","123456","mytestdb",0,NULL,0);//连接MySQL testdb数据库
 	if(conn_ptr)
 	{
 		printf("Connection Succeed!\n");
