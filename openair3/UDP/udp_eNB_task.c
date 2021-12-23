@@ -46,6 +46,14 @@
 #include "common/utils/LOG/vcd_signal_dumper.h"
 #include "msc.h"
 
+
+#define IPV4_ADDR    "%u.%u.%u.%u"
+#define IPV4_ADDR_FORMAT(aDDRESS)               \
+    (uint8_t)((aDDRESS)  & 0x000000ff),         \
+    (uint8_t)(((aDDRESS) & 0x0000ff00) >> 8 ),  \
+    (uint8_t)(((aDDRESS) & 0x00ff0000) >> 16),  \
+    (uint8_t)(((aDDRESS) & 0xff000000) >> 24)
+
 ///////////////////////////////////////////
 #include "measure/parser.h"
 // #include "measure/measure_log.h"
@@ -102,13 +110,6 @@ uint64_t getTimeUsec()
     gettimeofday(&t, 0);
     return (uint64_t)((uint64_t)(t.tv_sec) * 1000 * 1000 + t.tv_usec);
 }
-
-#define IPV4_ADDR    "%u.%u.%u.%u"
-#define IPV4_ADDR_FORMAT(aDDRESS)               \
-    (uint8_t)((aDDRESS)  & 0x000000ff),         \
-    (uint8_t)(((aDDRESS) & 0x0000ff00) >> 8 ),  \
-    (uint8_t)(((aDDRESS) & 0x00ff0000) >> 16),  \
-    (uint8_t)(((aDDRESS) & 0xff000000) >> 24)
 
 
 struct udp_socket_desc_s {
@@ -320,16 +321,19 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->buffer_length = n;
       udp_data_ind_p->peer_port     = htons(addr.sin_port);
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
-
+	  
       /////////测量
       measure_packet((char *)&udp_data_ind_p->buffer[8], 
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
-      // 调用接收程序丢弃时间戳数据包
-      int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+	  
+	  // 调用接收程序丢弃时间戳数据包
+	  int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
       if(flag){
         return;
       }
+	  
+	  
 
 #if defined(LOG_UDP) && LOG_UDP > 0
       LOG_I(UDP_, "Msg of length %d received from %s:%u\n",
@@ -360,6 +364,8 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
   //STAILQ_REMOVE(&udp_socket_list, udp_sock_p, udp_socket_desc_s, entries);
   //pthread_mutex_unlock(&udp_socket_list_mutex);
 }
+
+
 
 /*
  * 将数据包复制一份然后添加时间戳信息
@@ -432,7 +438,7 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
 
         is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key);  // is_ipv4_packet = 0; 表示ipv4
         if (is_ipv4_packet == 0) {
-          packet_key_to_char(&packet_key, flow_key);
+          packet_key_to_char(&packet_key, &flow_key);
           // 判断是否插入哈希表
           flag = myHashSetAddSamplingData(sendSet, flow_key);
         }
@@ -538,11 +544,10 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
     // 如果是ipv4的包
     if (is_ipv4_packet == 0) {
       packet_key_to_char(&packet_key, &flow_key);   
-      myHashSetAddDelayData(recvSet, flow_key, dData);
-
-      printf("\n");
+      int i = myHashSetAddDelayData(recvSet, flow_key, dData);
       MyHashSetIterator itt;
       MyHashSetIterator * it = &itt;
+      printf("\n");
       it->index = 0;
       it->set = recvSet;
       it->current = recvSet->dataList[0]->first;
@@ -555,12 +560,13 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
           MyNode *node = myHashSetIteratorNext(it);
 
   //        uint8_t *flow_key = node->data;
-          printf("%d   %d   %d   %d\n", node->delayInfo->NodeToNodeDelay,node->delayInfo->links[0].delay,
+          if(node->delayInfo != null) {
+            printf("%d   %d   %d   %d\n", node->delayInfo->NodeToNodeDelay,node->delayInfo->links[0].delay,
                   node->delayInfo->links[0].startNode,node->delayInfo->links[0].endNode);
+          }
       }
       printf("\n");
     }
-    
     // 释放内存
     LOG_W(UDP_, "Drop packets\n");
     itti_free(TASK_UDP, message_p);
@@ -570,6 +576,8 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
   else return 0;
 
 }
+
+
 
 void *udp_eNB_task(void *args_p)
 {
@@ -582,11 +590,13 @@ void *udp_eNB_task(void *args_p)
 
   itti_mark_task_ready(TASK_UDP);
   MSC_START_USE();
-
+  
+  
   // 创建表
   // MyHashSet sendSet;
   // initHashSet(myHashCodeString, myEqualString, &sendSet);
   // initHashSet(myHashCodeString, myEqualString, &recvSet); // 接收表
+    curr_eNB_id = 101;
   // 数据初始化
     Init_ElasticSketch(&recv_elastic_sketch, BUCKET_NUM, LIGHT_PART_COUNTER_NUM);
     initHashSet(myHashCodeString, myEqualString, &recvSet);
@@ -602,16 +612,8 @@ void *udp_eNB_task(void *args_p)
                         sock);
     // MyHashSet* sendSet = &Set;
     // measure_timer_create(5, &Set, &elastic_sketch,&mutex,sock);
-  
-  
-  
-  // 定义ip头部的结构体
-  packet_key_t packet_key;
-  int is_ipv4_packet;
-  uint8_t flow_key[13]={'0'}; // 存五元组
-  // 当前enb id
-  curr_eNB_id = 101;
-  
+
+
   while(1) {
     itti_receive_msg(TASK_UDP, &received_message_p);
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_UDP_ENB_TASK, VCD_FUNCTION_IN);
@@ -695,13 +697,19 @@ void *udp_eNB_task(void *args_p)
                 "(%d:%s) May be normal if GTPU kernel module loaded on same host (may NF_DROP IP packet)\n",
                 udp_sd, bytes_written, errno, strerror(errno));
         }
-
-        // 插入数据
-        measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
-                        &sendSet, sock, &send_mutex, &send_elastic_sketch);
-        // 调用复制数据包的程序发送复制后的数据包
-        delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
 		
+		
+		
+		// 插入数据
+    measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
+                        &sendSet, sock, &send_mutex, &send_elastic_sketch);
+		// 调用复制数据包的程序发送复制后的数据包
+		delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
+		
+		
+		
+		
+
         itti_free(ITTI_MSG_ORIGIN_ID(received_message_p), udp_data_req_p->buffer);
       }
       break;
