@@ -365,10 +365,53 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
   //pthread_mutex_unlock(&udp_socket_list_mutex);
 }
 
+// 测量丢包率 采用交替染色 这里构建一个给数据包修改标志位的函数
+uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
+  // 将IP的TOS的最高位 9 保留位置1 （所有的IP包默认是0）
+  // 0        8 9                  28      36      N
+  // +--------+--------------------+--------+------+
+  // |  GTP   |         IP         | TCP/UDP| Data | 
+  // +--------+--------------------+--------+------+
 
+
+  uint16_t ip_header[10];  // 提取出来的ip头部 用于计算新的校验和 原始 uint16_t
+  unit8_t TOS_flag = 0; // TOS 标志位
+  int flag = 0;
+  int is_ipv4_packet;
+  packet_key_t packet_key;
+  uint8_t flow_key[13]={'0'}; // 存五元组
+
+  // is_ipv4_packet = 0; 表示ipv4
+  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key); 
+  if (is_ipv4_packet == 0) {
+    packet_key_to_char(&packet_key, &flow_key);
+    // 判断是否插入哈希表
+    flag = myHashSetGetSendPLRFlag(sendSet, flow_key);
+    if (flag == 1) {
+        // 将TOS的8bit取出来 将最高位置1
+        TOS_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
+        TOS_flag |= 0x01
+        // 将改过的标志位放回到IP头部
+        memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 9, &TOS_flag, 1);
+        // 重新计算ip头部校验和
+        memcpy(&ip_header, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8, 20);
+        // 将原来的校验和变为00
+        ip_header[5] = 0x0000;
+        // 使用check_ip_sum计算校验和 函数在最前面
+        new_checksum = check_ip_sum(ip_header, 20);
+        // 将新的校验和放到ip头部
+        memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 18, &new_checksum, 2);
+        // 上面已经将 TOS的最高位置1并且 重新计算了IP头部的校验和
+    }
+  }
+} 
 
 /*
- * 将数据包复制一份然后添加时间戳信息
+ * 将数据包复制一份然后添加时间戳信息 为TOS的6 7位同时置1
+ * 0        8 9                  28      36      N
+ * +--------+--------------------+--------+------+
+ * |  GTP   |         IP         | TCP/UDP| Data | 
+ * +--------+--------------------+--------+------+
  */
 uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
   uint8_t time_flag;      // ip头部服务类型的保留位 标志位 表示这个包里面是时间戳信息
@@ -380,13 +423,14 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
   uint64_t current_millisecond;
   // 定义变量time_stamp_count：表示存放的时间戳数量 每次运行+1
   uint8_t time_stamp_count = 1;
+  // 定义 TOS最高位是否需要修改为1或者0
 
   // 随机概率选择需要存储当前的流信息 复制当前流
   // 发送时间戳的函数
   // 将ip的头部TOS的保留位设置为1(默认为0)表示这是一个时间戳的数据包 TOS 在第8位到16位公8位一个字节，最后一位16位为保留位
   time_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
   LOG_D(UDP_, "before time_flag: %x\n", time_flag);
-  time_flag = time_flag | 0x01;   // 把最后一位保留位变成1
+  time_flag = time_flag | 0x06;   // 把最后一位保留位变成1
   LOG_D(UDP_, "after time_flag: %x\n", time_flag);
 
   // 获取当前的时间戳信息
@@ -425,7 +469,7 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
 }
 
 /*
- * 发送复制后的数据包
+ * 发送复制后的数据包 测时延
  */
 int delay_measure_send(udp_data_req_t *udp_data_req_p,  
                   MyHashSet *sendSet,struct sockaddr * peer_addr, int udp_sd){
@@ -448,6 +492,9 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
         if (flag == 1) {
           current_millisecond = send_insert_timestamp(udp_data_req_p);
         }
+
+        // 判断是否需要修改最高位
+        send_insert_flag(udp_data_req_p, &sendSet);
         // 将复制的数据包发送出去
         send_timestamp = sendto(
                   udp_sd,
@@ -487,7 +534,7 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
 }
 
 /*
- * 接收复制的数据包 
+ * 接收复制的数据包 计算时延
  */
 int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
                       uint8_t *forwarded_buffer, MyHashSet *recvSet){
@@ -577,6 +624,13 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
 }
 
+/*
+* 接收测量丢包率的包 将其标志位复原 计算丢包率
+*/
+int loss_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
+                      uint8_t *forwarded_buffer, MyHashSet *recvSet) {
+                        
+}
 
 
 void *udp_eNB_task(void *args_p)
@@ -684,6 +738,15 @@ void *udp_eNB_task(void *args_p)
               IPV4_ADDR_FORMAT(udp_data_req_p->peer_address),
               udp_data_req_p->peer_port);
 //#endif
+
+
+
+        /*-----------------修改丢包率的TOS标志位---------------*/
+        send_insert_flag(udp_data_req_p, &sendSet);
+
+
+
+
         bytes_written = sendto(
                           udp_sd,
                           &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],
@@ -700,12 +763,12 @@ void *udp_eNB_task(void *args_p)
 		
 		
 		
-		// 插入数据
-    measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
-                        &sendSet, sock, &send_mutex, &send_elastic_sketch);
-		// 调用复制数据包的程序发送复制后的数据包
-		delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
-		
+        // 插入数据
+        measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
+                            &sendSet, sock, &send_mutex, &send_elastic_sketch);
+        // 调用复制数据包的程序发送复制后的数据包
+        delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
+        
 		
 		
 		

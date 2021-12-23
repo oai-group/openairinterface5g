@@ -225,7 +225,7 @@ int myHashSetAddSamplingData(MyHashSet *  set, uint8_t*  flow_key)
 
 }
 //recv端插入统计信息
-int myHashSetAddRecvPLRData(MyHashSet *  set, uint8_t*  flow_key,int flag)
+int myHashSetAddRecvPLRData(MyHashSet *  set, uint8_t*  flow_key, int flag)
 {  
     uint8_t *data = (uint8_t *) malloc(sizeof(uint8_t)*13);
     memcpy(data, flow_key, 13);
