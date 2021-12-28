@@ -378,11 +378,12 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
 
 
   uint16_t ip_header[10];  // 提取出来的ip头部 用于计算新的校验和 原始 uint16_t
-  unit8_t TOS_flag = 0; // TOS 标志位
+  uint8_t TOS_flag = 0; // TOS 标志位
   int flag = 0;
   int is_ipv4_packet;
   packet_key_t packet_key;
   uint8_t flow_key[13]={'0'}; // 存五元组
+  uint16_t new_checksum;  // 计算出来的新的校验和
 
   // is_ipv4_packet = 0; 表示ipv4
   is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key); 
@@ -393,7 +394,7 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
     if (flag == 1) {
         // 将TOS的8bit取出来 将最高位置1
         TOS_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
-        TOS_flag |= 0x01
+        TOS_flag |= 0x01;
         // 将改过的标志位放回到IP头部
         memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 9, &TOS_flag, 1);
         // 重新计算ip头部校验和
@@ -550,7 +551,7 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
 
   // 判断标志位 是否是复制的数据包
-  if ((udp_data_ind_p->buffer[9] & 0x01) == 0x06) {
+  if ((udp_data_ind_p->buffer[9] & 0x06) == 0x06) {
 
     // 获取当前时间
     current_millisecond = getTimeUsec();
@@ -630,7 +631,7 @@ int loss_measure_recv(udp_data_ind_t *udp_data_ind_p, MyHashSet *recvSet) {
   uint8_t flow_key[13]={'0'}; // 存五元组
 
   // is_ipv4_packet = 0; 表示ipv4
-  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key);  
+  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_ind_p->buffer[8]), &packet_key);
   if (is_ipv4_packet == 0) {
     packet_key_to_char(&packet_key, &flow_key);
     // 判断标志位 
