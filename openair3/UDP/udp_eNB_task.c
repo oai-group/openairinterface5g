@@ -550,7 +550,7 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
 
   // 判断标志位 是否是复制的数据包
-  if ((udp_data_ind_p->buffer[9] & 0x01) == 0x06) {
+  if ((udp_data_ind_p->buffer[9] & 0x06) == 0x06) {
 
     // 获取当前时间
     current_millisecond = getTimeUsec();

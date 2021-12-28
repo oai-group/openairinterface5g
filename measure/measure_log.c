@@ -322,14 +322,13 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
     pthread_mutex_lock(mutex);
     uint8_t flow_key[14]={'0'};
     packet_key_to_char(&packet_key, &flow_key);
-    (packet[1] & 0x01) == 0x01
 
 
     if(packet_key.packet_len > 0){
       //printf("\n BYTES num %d\n",packet_key.packet_len);
       //////////////////
       myHashSetAddData(Set, &flow_key);
-      if((packet[1] & 0x01) == 0x01){
+      if((packet[1] & 0x06) == 0x06){
           return ;
       }
       
