@@ -327,11 +327,14 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
 	  
+    // 调用丢包率的代码
+    loss_measure_recv(udp_data_ind_p, &recvSet);
+
 	  // 调用接收程序丢弃时间戳数据包
 	  int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
-      if(flag){
-        return;
-      }
+    if(flag){
+      return;
+    }
 	  
 	  
 
@@ -539,12 +542,6 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
 int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
                       uint8_t *forwarded_buffer, MyHashSet *recvSet){
   uint64_t current_millisecond;  // 当前时间
-  // uint64_t *p = NULL;
-  // 定义ip地址的变量指针
-  // uint8_t src_ip[4];
-  // uint8_t dst_ip[4];
-  // uint8_t protocol_type;
-  // uint16_t src_port, dst_port;
 
   // 定义ip头部的结构体
   packet_key_t packet_key;
@@ -553,7 +550,7 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
 
   // 判断标志位 是否是复制的数据包
-  if ((udp_data_ind_p->buffer[9] & 0x01) == 0x01) {
+  if ((udp_data_ind_p->buffer[9] & 0x01) == 0x06) {
 
     // 获取当前时间
     current_millisecond = getTimeUsec();
@@ -627,9 +624,22 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 /*
 * 接收测量丢包率的包 将其标志位复原 计算丢包率
 */
-int loss_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
-                      uint8_t *forwarded_buffer, MyHashSet *recvSet) {
-                        
+int loss_measure_recv(udp_data_ind_t *udp_data_ind_p, MyHashSet *recvSet) {
+  int is_ipv4_packet;
+  packet_key_t packet_key;
+  uint8_t flow_key[13]={'0'}; // 存五元组
+
+  // is_ipv4_packet = 0; 表示ipv4
+  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key);  
+  if (is_ipv4_packet == 0) {
+    packet_key_to_char(&packet_key, &flow_key);
+    // 判断标志位 
+    if ((udp_data_ind_p->buffer[9] & 0x01) == 0x01) {
+      myHashSetAddRecvPLRData(recvSet, flow_key, 1);
+    } else {
+      myHashSetAddRecvPLRData(recvSet, flow_key, 0);
+    }
+  }
 }
 
 
