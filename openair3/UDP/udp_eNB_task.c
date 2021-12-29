@@ -533,24 +533,24 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
         }
 
 
-        // 已经存完了表之后
-        MyHashSetIterator itt;
-        MyHashSetIterator * it = &itt;
-        it->index = 0;
-        it->set = sendSet;
-        it->current = sendSet->dataList[0]->first;
-        it->count = 0;
-        int x = 0;
-        while(myHashSetIteratorHasNext(it)) {
-            x++;
+        // // 已经存完了表之后
+        // MyHashSetIterator itt;
+        // MyHashSetIterator * it = &itt;
+        // it->index = 0;
+        // it->set = sendSet;
+        // it->current = sendSet->dataList[0]->first;
+        // it->count = 0;
+        // int x = 0;
+        // while(myHashSetIteratorHasNext(it)) {
+        //     x++;
 
-            // printf("begin get node \n\n\n");
-            MyNode *node = myHashSetIteratorNext(it);
+        //     // printf("begin get node \n\n\n");
+        //     MyNode *node = myHashSetIteratorNext(it);
 
-        //        uint8_t *flow_key = node->data;
-            printf("\n%ld   \n", node->samplingData.lastSamplingTime);
-        }
-        return 0;
+        // //        uint8_t *flow_key = node->data;
+        //     printf("\n%ld   \n", node->samplingData.lastSamplingTime);
+        // }
+        // return 0;
 }
 
 /*
@@ -608,27 +608,27 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
       dData->count = 1;   
       int i = myHashSetAddDelayData(recvSet, flow_key, dData);
 
-      MyHashSetIterator itt;
-      MyHashSetIterator * it = &itt;
-      printf("\n");
-      it->index = 0;
-      it->set = recvSet;
-      it->current = recvSet->dataList[0]->first;
-      it->count = 0;
-      int x = 0;
-      while(myHashSetIteratorHasNext(it)) {
-          x++;
+  //     MyHashSetIterator itt;
+  //     MyHashSetIterator * it = &itt;
+  //     printf("\n");
+  //     it->index = 0;
+  //     it->set = recvSet;
+  //     it->current = recvSet->dataList[0]->first;
+  //     it->count = 0;
+  //     int x = 0;
+  //     while(myHashSetIteratorHasNext(it)) {
+  //         x++;
 
-          // printf("begin get node \n\n\n");
-          MyNode *node = myHashSetIteratorNext(it);
+  //         // printf("begin get node \n\n\n");
+  //         MyNode *node = myHashSetIteratorNext(it);
 
-  //        uint8_t *flow_key = node->data;
-          if(node->delayInfo != null) {
-            printf("%d   %d   %d   %d\n", node->delayInfo->NodeToNodeDelay,node->delayInfo->links[0].delay,
-                  node->delayInfo->links[0].startNode,node->delayInfo->links[0].endNode);
-          }
-      }
-      printf("\n");
+  // //        uint8_t *flow_key = node->data;
+  //         if(node->delayInfo != null) {
+  //           printf("%d   %d   %d   %d\n", node->delayInfo->NodeToNodeDelay,node->delayInfo->links[0].delay,
+  //                 node->delayInfo->links[0].startNode,node->delayInfo->links[0].endNode);
+  //         }
+  //     }
+  //     printf("\n");
     }
     // 释放内存
     LOG_W(UDP_, "Drop packets\n");
