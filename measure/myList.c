@@ -108,6 +108,12 @@ void myListInsertSamplingDataAtLast(MyList *  list, uint8_t*  data)
     struct timeval t;
     gettimeofday(&t, 0);
     node->samplingData.lastSamplingTime = (uint64_t)((uint64_t)t.tv_sec * 1000 * 1000 + t.tv_usec);
+    node->isClassified = 0;
+    node->isReceived = 1;
+    node->notReceived = 0;
+    node->totalTime = 0;
+    memset(&node->plrData,0,sizeof(PLRData));
+    node->delayInfo = NULL;
 
     if (list->count)
     {
