@@ -326,15 +326,22 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       measure_packet((char *)&udp_data_ind_p->buffer[8], 
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
-	  
-    // 调用丢包率的代码
-    loss_measure_recv(udp_data_ind_p, &recvSet);
 
-	  // 调用接收程序丢弃时间戳数据包
-	  int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
-    if(flag){
-      return;
-    }
+      printf("Before loss_measure_recv\n");
+
+      // 调用丢包率的代码
+      loss_measure_recv(udp_data_ind_p, &recvSet);
+
+      printf("After loss_measure_recv\n");
+      printf("Before delay_measure_recv\n");
+
+      // 调用接收程序丢弃时间戳数据包
+      int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+      printf("After delay_measure_recv, flag : %d\n", flag);
+      if(flag){
+        return;
+      }
+      printf("After delay_measure_recv return, flag : %d\n", flag);
 	  
 	  
 
@@ -428,6 +435,12 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
   // 定义变量time_stamp_count：表示存放的时间戳数量 每次运行+1
   uint8_t time_stamp_count = 1;
   // 定义 TOS最高位是否需要修改为1或者0
+
+
+  // 这里需要判断udp的载荷如果小于10字节 需要给分配一个10字节的长度
+  // TCP 直接从8字节后截断
+
+
 
   // 随机概率选择需要存储当前的流信息 复制当前流
   // 发送时间戳的函数
