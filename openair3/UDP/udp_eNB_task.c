@@ -417,6 +417,51 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
   }
 } 
 
+
+// 测量丢包率 采用交替染色 这里构建一个给数据包修改标志位的函数
+uint64_t send_insert_flag_new_buffer(uint8_t* new_ip_data, MyHashSet *sendSet) {
+  // 将IP的TOS的最高位 9 保留位置1 （所有的IP包默认是0）
+  // 0        8 9                  28      36      N
+  // +--------+--------------------+--------+------+
+  // |  GTP   |         IP         | TCP/UDP| Data | 
+  // +--------+--------------------+--------+------+
+
+
+  uint16_t ip_header[10];  // 提取出来的ip头部 用于计算新的校验和 原始 uint16_t
+  uint8_t TOS_flag = 0; // TOS 标志位
+  int flag = 0;
+  int is_ipv4_packet;
+  packet_key_t packet_key;
+  uint8_t flow_key[13]={'0'}; // 存五元组
+  uint16_t new_checksum;  // 计算出来的新的校验和
+
+  // is_ipv4_packet = 0; 表示ipv4
+  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key); 
+  if (is_ipv4_packet == 0) {
+    packet_key_to_char(&packet_key, &flow_key);
+    // 判断是否插入哈希表
+    flag = myHashSetGetSendPLRFlag(sendSet, flow_key);
+    if (flag == 1) {
+        // 将TOS的8bit取出来 将最高位置1
+        TOS_flag = new_ip_data[9];
+        TOS_flag |= 0x01;
+        // 将改过的标志位放回到IP头部
+        memcpy(&new_ip_data[9], &TOS_flag, 1);
+        // 重新计算ip头部校验和
+        memcpy(&ip_header, &new_ip_data[8], 20);
+        // 将原来的校验和变为00
+        ip_header[5] = 0x0000;
+        // 使用check_ip_sum计算校验和 函数在最前面
+        new_checksum = check_ip_sum(ip_header, 20);
+        // 将新的校验和放到ip头部
+        memcpy(&new_ip_data[18], &new_checksum, 2);
+        // 上面已经将 TOS的最高位置1并且 重新计算了IP头部的校验和
+    }
+  }
+} 
+
+
+
 /*
  * 将数据包复制一份然后添加时间戳信息 为TOS的6 7位同时置1
  * 0        8 9                  28      36      N
@@ -424,7 +469,7 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
  * |  GTP   |         IP         | TCP/UDP| Data | 
  * +--------+--------------------+--------+------+
  */
-uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
+uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_flag, uint8_t* new_ip_data) {
   uint8_t time_flag;      // ip头部服务类型的保留位 标志位 表示这个包里面是时间戳信息
   uint16_t udp_length;    // 数据改为时间戳后的udp头部和数据部分的总的长度 
   uint16_t ip_length;    // 数据改为时间戳后的ip头部和数据部分的总的长度 
@@ -434,13 +479,6 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
   uint64_t current_millisecond;
   // 定义变量time_stamp_count：表示存放的时间戳数量 每次运行+1
   uint8_t time_stamp_count = 1;
-  // 定义 TOS最高位是否需要修改为1或者0
-
-
-  // 这里需要判断udp的载荷如果小于10字节 需要给分配一个10字节的长度
-  // TCP 直接从8字节后截断
-  // 查看协议
-  // if (udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 17] )
 
 
   // 随机概率选择需要存储当前的流信息 复制当前流
@@ -459,10 +497,19 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
   memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 9, &time_flag, 1);
   LOG_D(UDP_, "udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9]: %x\n", udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9]);
 
-  // 把当前基站id和总的时间戳个数添加到数据部分
-  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 36, &time_stamp_count, 1);  // 添加时间戳个数
-  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 37, &curr_eNB_id, 1);  // 添加eNB设备id
-  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 38, &current_millisecond, 8); // 添加时间戳
+  // 这里判断是否需要使用额外的buffer
+  if (length_flag == 1) {
+    // 此时的长度不够用 需要额外的buffer new_ip_data
+    memcpy(&new_ip_data[36], &time_stamp_count, 1);  // 添加时间戳个数
+    memcpy(&new_ip_data[37], &curr_eNB_id, 1);  // 添加eNB设备id
+    memcpy(&new_ip_data[38], &current_millisecond, 8); // 添加时间戳
+  } else {
+    // 此时的长度是够用的 不需要额外的buffer
+    // 把当前基站id和总的时间戳个数添加到数据部分
+    memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 36, &time_stamp_count, 1);  // 添加时间戳个数
+    memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 37, &curr_eNB_id, 1);  // 添加eNB设备id
+    memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 38, &current_millisecond, 8); // 添加时间戳
+  }
 
   // 将 UDP 头部中数据长度的部分改成 8 + i * 9 + 1 = 9 + 9 * i 字节 偏移 8 + 20 + 4 = 32 字节 (8-GTP   20-IP)
   udp_length = (uint16_t)(time_stamp_count * 9 + 9);
@@ -482,6 +529,12 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
   new_checksum = check_ip_sum(ip_header, 20);
   // 将新的校验和放到ip头部
   memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 18, &new_checksum, 2);
+
+  // 判断是否需要额外的buffer
+  if (length_flag == 1) {
+    // 需要
+    memcpy(&new_ip_data, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], 36);
+  }
 
   return current_millisecond;
 }
@@ -507,22 +560,54 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
 
         // 如果flag的话就插入
         uint64_t current_millisecond;
+
         if (flag == 1) {
-          current_millisecond = send_insert_timestamp(udp_data_req_p);
+
+          // 判断UDP的载荷是不是小于10 需要额外的buffer
+          if (packet_key.protocol == UDP_PROTOCOL_NUM &&  packet_key.packet_len < 10) {
+            uint8_t new_ip_data[46];
+            current_millisecond = send_insert_timestamp(udp_data_req_p, 1, &new_ip_data);
+            // 需要重新修改数组中的标志位为1
+            send_insert_flag_new_buffer(&new_ip_data, sendSet)
+            // 发送新的buffer中的数据
+            send_timestamp = sendto(
+                      udp_sd,
+                      &new_ip_data,   // (const char*)current_time
+                      sizeof(current_millisecond) + 38,
+                      0,
+                      (struct sockaddr *)peer_addr,
+                      sizeof(struct sockaddr_in));
+
+          } else {
+            // 按照原来的方式发送数据包
+            current_millisecond = send_insert_timestamp(udp_data_req_p, 0, &new_ip_data);
+            // 判断是否需要修改最高位
+            send_insert_flag(udp_data_req_p, sendSet);
+            // 将复制的数据包发送出去
+            send_timestamp = sendto(
+                      udp_sd,
+                      &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],   // (const char*)current_time
+                      sizeof(current_millisecond) + 38,
+                      0,
+                      (struct sockaddr *)peer_addr,
+                      sizeof(struct sockaddr_in));
+          }
+
         } else {
+
           return;
         }
 
-        // 判断是否需要修改最高位
-        send_insert_flag(udp_data_req_p, sendSet);
-        // 将复制的数据包发送出去
-        send_timestamp = sendto(
-                  udp_sd,
-                  &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],   // (const char*)current_time
-                  sizeof(current_millisecond) + 38,
-                  0,
-                  (struct sockaddr *)peer_addr,
-                  sizeof(struct sockaddr_in));
+        // // 判断是否需要修改最高位
+        // send_insert_flag(udp_data_req_p, sendSet);
+        // // 将复制的数据包发送出去
+        // send_timestamp = sendto(
+        //           udp_sd,
+        //           &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],   // (const char*)current_time
+        //           sizeof(current_millisecond) + 38,
+        //           0,
+        //           (struct sockaddr *)peer_addr,
+        //           sizeof(struct sockaddr_in));
 
         // 发送失败打印消息
         // LOG_D(UDP_, sizeof(current_time));
