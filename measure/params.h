@@ -41,7 +41,7 @@
 //hash函数用到的种子
 #define BOBHASH_SEED (750)
 //set超时时间
-#define TIMEOUTSLOT (20)
+#define TIMEOUTSLOT (5)
 // 偏移
 #define SHIFT 8
 // PLR测量染色间隔
