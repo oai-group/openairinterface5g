@@ -37,7 +37,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         PreNode * preLast = NULL;
         // printf("change3 \n\n\n"); 
 
-
+        printf(fp,"index\t\tSrc IP\t\t  Dst IP\tProtocolt\tSrc port\tDst port\t");   
         printf("realRecv   shouldRecv    delay \n");
         while(myHashSetIteratorHasNext(it)){
             x++;
@@ -103,6 +103,18 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
             }
+            printf(fp,"%3d :   ", x);
+            printf(fp,"    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
+            printf(fp,"%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
+            if (flow_key[12] == 6){
+                printf(fp,"  TCP\t");
+            }else if (flow_key[12] == 17){
+                printf(fp,"  UDP\t");
+            }else{
+                printf(fp,"  %3d\t",flow_key[12]);
+            }
+            printf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
+            printf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             
             printf("    %5d\t    %5d\t    %5ld\t \n",node->plrData.realRecv, node->plrData.shouldRecv, node->delayInfo->NodeToNodeDelay);
 
