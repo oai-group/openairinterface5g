@@ -165,8 +165,17 @@ int myHashSetAddDelayData(MyHashSet *  set, uint8_t*  flow_key, DelayData *delay
         return 1;
     }
     else{
-        if(re->delayInfo)
+        int lastCount = 0;
+        unsigned long lastNodeToNodeDelay = 0;
+
+        if(re->delayInfo){
+            lastCount = re->delayInfo->count;
+            lastNodeToNodeDelay = re->delayInfo->NodeToNodeDelay;
             free(re->delayInfo);
+            delayInfo->count = lastCount + 1;
+            delayInfo->NodeToNodeDelay = (lastNodeToNodeDelay * lastCount + delayInfo->NodeToNodeDelay)/delayInfo->count;
+            
+        }
         re->delayInfo = delayInfo;
         // re->isReceived = 1;
     }

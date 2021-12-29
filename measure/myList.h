@@ -20,6 +20,7 @@ typedef struct linkDelay{
 
 typedef struct delayData{
     int linkNum;
+    int count;
     unsigned long NodeToNodeDelay;
     LinkDelay links[10];
 } DelayData;

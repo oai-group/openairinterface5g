@@ -14,7 +14,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         fp = NULL;}
     
     if (fp){
-        printf("had output statisics\n");
+        // printf("had output statisics\n");
         fprintf(fp,"==========================the %d statisics============================\n",count);
 
         MyHashSetIterator itt;
@@ -38,7 +38,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         // printf("change3 \n\n\n"); 
 
 
-       
+        printf("realRecv   shouldRecv    delay \n");
         while(myHashSetIteratorHasNext(it)){
             x++;
 
@@ -103,6 +103,8 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
             }
+            
+            printf("    %5d\t    %5d\t    %5ld\t \n",node->plrData.realRecv, node->plrData.shouldRecv, node->delayInfo->NodeToNodeDelay);
             fprintf(fp,"\n");
             
 
@@ -204,7 +206,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         
 
 
-        printf("had close file\n");
+        // printf("had close file\n");
 
 
 

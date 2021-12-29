@@ -327,21 +327,21 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
 
-      printf("Before loss_measure_recv\n");
+      // printf("Before loss_measure_recv\n");
 
       // 调用丢包率的代码
       loss_measure_recv(udp_data_ind_p, &recvSet);
 
-      printf("After loss_measure_recv\n");
-      printf("Before delay_measure_recv\n");
+      // printf("After loss_measure_recv\n");
+      // printf("Before delay_measure_recv\n");
 
       // 调用接收程序丢弃时间戳数据包
       int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
-      printf("After delay_measure_recv, flag : %d\n", flag);
+      // printf("After delay_measure_recv, flag : %d\n", flag);
       if(flag){
         return;
       }
-      printf("After delay_measure_recv return, flag : %d\n", flag);
+      // printf("After delay_measure_recv return, flag : %d\n", flag);
 	  
 	  
 
