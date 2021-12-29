@@ -419,7 +419,7 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
 
 
 // 测量丢包率 采用交替染色 这里构建一个给数据包修改标志位的函数
-uint64_t send_insert_flag_new_buffer(udp_data_req_t *udp_data_req_p， uint8_t* new_ip_data, MyHashSet *sendSet) {
+uint64_t send_insert_flag_new_buffer(udp_data_req_t *udp_data_req_p, uint8_t* new_ip_data, MyHashSet *sendSet) {
   // 将IP的TOS的最高位 9 保留位置1 （所有的IP包默认是0）
   // 0        8 9                  28      36      N
   // +--------+--------------------+--------+------+
