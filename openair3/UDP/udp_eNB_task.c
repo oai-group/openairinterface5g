@@ -604,8 +604,10 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
     // 如果是ipv4的包
     if (is_ipv4_packet == 0) {
-      packet_key_to_char(&packet_key, &flow_key);   
+      packet_key_to_char(&packet_key, &flow_key);
+      dData->count = 1;   
       int i = myHashSetAddDelayData(recvSet, flow_key, dData);
+
       MyHashSetIterator itt;
       MyHashSetIterator * it = &itt;
       printf("\n");
