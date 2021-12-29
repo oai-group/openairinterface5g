@@ -120,9 +120,14 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
 
             //清除上个周期的丢包率，时延等统计信息
             if(node->delayInfo){
+                printf("    %5d\t    %5d\t    %5ld\t \n",node->plrData.realRecv, node->plrData.shouldRecv, node->delayInfo->NodeToNodeDelay);
                 free(node->delayInfo);
+            }else{
+                printf("    %5d\t    %5d\t    null\t \n",node->plrData.realRecv, node->plrData.shouldRecv);
             }
-            memset(&node->plrData,0,sizeof(PLRData));
+            node->plrData.realRecv = 0;
+            node->plrData.shouldRecv = 0;
+            // memset(&node->plrData,0,sizeof(PLRData));
 
             
             
