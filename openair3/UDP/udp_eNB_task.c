@@ -439,7 +439,8 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p) {
 
   // 这里需要判断udp的载荷如果小于10字节 需要给分配一个10字节的长度
   // TCP 直接从8字节后截断
-
+  // 查看协议
+  if (udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 17] )
 
 
   // 随机概率选择需要存储当前的流信息 复制当前流

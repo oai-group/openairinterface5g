@@ -329,6 +329,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
       //////////////////
       myHashSetAddData(Set, &flow_key);
       if((packet[1] & 0x06) == 0x06){
+          pthread_mutex_unlock(mutex);
           return ;
       }
       
@@ -418,5 +419,6 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
       free(packet_1);
     }
     pthread_mutex_unlock(mutex);
+    
   }
 }
