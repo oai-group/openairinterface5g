@@ -419,7 +419,7 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet) {
 
 
 // 测量丢包率 采用交替染色 这里构建一个给数据包修改标志位的函数
-uint64_t send_insert_flag_new_buffer(uint8_t* new_ip_data, MyHashSet *sendSet) {
+uint64_t send_insert_flag_new_buffer(udp_data_req_t *udp_data_req_p， uint8_t* new_ip_data, MyHashSet *sendSet) {
   // 将IP的TOS的最高位 9 保留位置1 （所有的IP包默认是0）
   // 0        8 9                  28      36      N
   // +--------+--------------------+--------+------+
@@ -562,13 +562,13 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
         uint64_t current_millisecond;
 
         if (flag == 1) {
+          uint8_t new_ip_data[46];
 
           // 判断UDP的载荷是不是小于10 需要额外的buffer
           if (packet_key.protocol == UDP_PROTOCOL_NUM &&  packet_key.packet_len < 10) {
-            uint8_t new_ip_data[46];
             current_millisecond = send_insert_timestamp(udp_data_req_p, 1, &new_ip_data);
             // 需要重新修改数组中的标志位为1
-            send_insert_flag_new_buffer(&new_ip_data, sendSet)
+            send_insert_flag_new_buffer(udp_data_req_p, &new_ip_data, sendSet);
             // 发送新的buffer中的数据
             send_timestamp = sendto(
                       udp_sd,
