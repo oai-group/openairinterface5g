@@ -105,6 +105,15 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             }
             
             printf("    %5d\t    %5d\t    %5ld\t \n",node->plrData.realRecv, node->plrData.shouldRecv, node->delayInfo->NodeToNodeDelay);
+
+            //清除上个周期的丢包率，时延等统计信息
+            if(node->delayInfo){
+                free(node->delayInfo);
+            }
+            memset(&node->plrData,0,sizeof(PLRData));
+
+            
+            
             fprintf(fp,"\n");
             
 
