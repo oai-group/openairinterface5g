@@ -495,10 +495,12 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
         uint64_t current_millisecond;
         if (flag == 1) {
           current_millisecond = send_insert_timestamp(udp_data_req_p);
+        } else {
+          return;
         }
 
         // 判断是否需要修改最高位
-        send_insert_flag(udp_data_req_p, &sendSet);
+        send_insert_flag(udp_data_req_p, sendSet);
         // 将复制的数据包发送出去
         send_timestamp = sendto(
                   udp_sd,
@@ -754,6 +756,7 @@ void *udp_eNB_task(void *args_p)
 
         /*-----------------修改丢包率的TOS标志位---------------*/
         send_insert_flag(udp_data_req_p, &sendSet);
+        
 
 
 
