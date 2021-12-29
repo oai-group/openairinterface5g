@@ -113,25 +113,32 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             }else{
                 printf("  %3d\t",flow_key[12]);
             }
+            printf("1\n");   
+
             printf("    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
             printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             
-            printf("    %5d\t    %5d\t    %5ld\t \n",node->plrData.realRecv, node->plrData.shouldRecv, node->delayInfo->NodeToNodeDelay);
-
             //清除上个周期的丢包率，时延等统计信息
             if(node->delayInfo){
+                printf("2\n");   
+
                 printf("    %5d\t    %5d\t    %5ld\t \n",node->plrData.realRecv, node->plrData.shouldRecv, node->delayInfo->NodeToNodeDelay);
+                printf("3\n");   
+
                 free(node->delayInfo);
                 node->delayInfo = NULL;
             }else{
+                printf("4\n");   
+
                 printf("    %5d\t    %5d\t    null\t \n",node->plrData.realRecv, node->plrData.shouldRecv);
             }
+            
             node->plrData.realRecv = 0;
             node->plrData.shouldRecv = 0;
             // memset(&node->plrData,0,sizeof(PLRData));
 
-            
-            
+
+            printf("5\n");   
             fprintf(fp,"\n");
             
 
