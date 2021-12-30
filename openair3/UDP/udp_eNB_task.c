@@ -336,11 +336,12 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
 
       // 调用接收程序丢弃时间戳数据包
       int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+      pthread_mutex_unlock(&recv_mutex);
       // printf("After delay_measure_recv, flag : %d\n", flag);
       if(flag){
         return;
       }
-      pthread_mutex_unlock(&recv_mutex);
+      
       // printf("After delay_measure_recv return, flag : %d\n", flag);
 	  
 	  
