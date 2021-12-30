@@ -485,9 +485,9 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
   // 发送时间戳的函数
   // 将ip的头部TOS的保留位设置为1(默认为0)表示这是一个时间戳的数据包 TOS 在第8位到16位公8位一个字节，最后一位16位为保留位
   time_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
-  LOG_D(UDP_, "before time_flag: %x\n", time_flag);
+  printf("before time_flag: %x\n", time_flag);
   time_flag = time_flag | 0x06;   // 把最后一位保留位变成1
-  LOG_D(UDP_, "after time_flag: %x\n", time_flag);
+  printf("after time_flag: %x\n", time_flag);
 
   // 获取当前的时间戳信息
   current_millisecond = getTimeUsec();
@@ -499,10 +499,14 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
 
   // 这里判断是否需要使用额外的buffer
   if (length_flag == 1) {
+    printf("length_flag == 1\n")
     // 此时的长度不够用 需要额外的buffer new_ip_data
-    memcpy(new_ip_data[36], &time_stamp_count, 1);  // 添加时间戳个数
-    memcpy(new_ip_data[37], &curr_eNB_id, 1);  // 添加eNB设备id
-    memcpy(new_ip_data[38], &current_millisecond, 8); // 添加时间戳
+    memcpy(&new_ip_data[36], &time_stamp_count, 1);  // 添加时间戳个数
+    printf("1\n")
+    memcpy(&new_ip_data[37], &curr_eNB_id, 1);  // 添加eNB设备id
+    printf("2\n")
+    memcpy(&new_ip_data[38], &current_millisecond, 8); // 添加时间戳
+    printf("3\n")
   } else {
     // 此时的长度是够用的 不需要额外的buffer
     // 把当前基站id和总的时间戳个数添加到数据部分
@@ -532,8 +536,10 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
 
   // 判断是否需要额外的buffer
   if (length_flag == 1) {
+    printf("4\n")
     // 需要
     memcpy(new_ip_data, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], 36);
+    printf("5\n")
   }
 
   return current_millisecond;
