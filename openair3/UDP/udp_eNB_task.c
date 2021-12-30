@@ -520,24 +520,19 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
 /*
  * 发送复制后的数据包 测时延
  */
-int delay_measure_send(udp_data_req_t *udp_data_req_p,  
-                  MyHashSet *sendSet,struct sockaddr * peer_addr, int udp_sd){
+int delay_measure_send(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet, 
+                        struct sockaddr * peer_addr, int udp_sd, packet_key_t packet_key, uint8_t flow_key[13]){
         // 解析ip数据
         int flag = -1;
         ssize_t send_timestamp; // 发送时间戳后返回的标志位
-        int is_ipv4_packet;
-        packet_key_t packet_key;
-        uint8_t flow_key[13]={0}; // 存五元组
+        // int is_ipv4_packet;
+        // packet_key_t packet_key;
+        // uint8_t flow_key[13]={0}; // 存五元组
         // 如果flag的话就插入
         uint64_t current_millisecond;
 
-        // is_ipv4_packet = 0; 表示ipv4
-        is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key);  
-        if (is_ipv4_packet == 0) {
-          packet_key_to_char(&packet_key, &flow_key);
-          // 判断是否插入哈希表
-          flag = myHashSetAddSamplingData(sendSet, flow_key);
-        }
+        // 判断是否插入哈希表
+        flag = myHashSetAddSamplingData(sendSet, flow_key);
 
         if (flag == 1) {
           uint8_t new_ip_data[46] ={'0'};
@@ -819,15 +814,24 @@ void *udp_eNB_task(void *args_p)
               udp_data_req_p->peer_port);
 //#endif
 
+        // 解析数据包
+        // is_ipv4_packet = 0; 表示ipv4
+        int is_ipv4_packet;
+        packet_key_t packet_key;
+        uint8_t flow_key[13]={'0'}; // 存五元组
+
+        is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), &packet_key);  
+        if (is_ipv4_packet == 0) {
+          packet_key_to_char(&packet_key, &flow_key);
 
 
-        /*-----------------修改丢包率的TOS标志位---------------*/
-        send_insert_flag(udp_data_req_p, &sendSet);
+          /*-----------------修改丢包率的TOS标志位---------------*/
+          send_insert_flag(udp_data_req_p, &sendSet, flow_key);
+        }
+
+
+
         
-
-
-
-
         bytes_written = sendto(
                           udp_sd,
                           &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],
@@ -843,12 +847,13 @@ void *udp_eNB_task(void *args_p)
         }
 		
 		
-		
-        // 插入数据
-        measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
-                            &sendSet, sock, &send_mutex, &send_elastic_sketch);
-        // 调用复制数据包的程序发送复制后的数据包
-        delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
+        if (is_ipv4_packet == 0) {
+          // 插入数据
+          measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
+                              &sendSet, sock, &send_mutex, &send_elastic_sketch);
+          // 调用复制数据包的程序发送复制后的数据包
+          delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd, packet_key, flow_key);
+        }
         
 		
 		
