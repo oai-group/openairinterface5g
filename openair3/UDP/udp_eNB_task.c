@@ -323,6 +323,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
 	  
       /////////测量
+      pthread_mutex_lock(&recv_mutex);
       measure_packet((char *)&udp_data_ind_p->buffer[8], 
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
@@ -332,15 +333,13 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       // 调用丢包率的代码
       loss_measure_recv(udp_data_ind_p, &recvSet);
 
-      // printf("After loss_measure_recv\n");
-      // printf("Before delay_measure_recv\n");
-
       // 调用接收程序丢弃时间戳数据包
       int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
       // printf("After delay_measure_recv, flag : %d\n", flag);
       if(flag){
         return;
       }
+      pthread_mutex_unlock(&recv_mutex);
       // printf("After delay_measure_recv return, flag : %d\n", flag);
 	  
 	  
@@ -524,33 +523,11 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
                   (struct sockaddr *)peer_addr,
                   sizeof(struct sockaddr_in));
 
-        // 发送失败打印消息
-        // LOG_D(UDP_, sizeof(current_time));
-        // LOG_D(UDP_, "sizeof(current_time): %d, send_timestamp: %zd\n", sizeof(current_time), send_timestamp);
         LOG_D(UDP_, "send_timestamp: %zd\n", send_timestamp);
         if (send_timestamp != sizeof(current_millisecond) + 38) {
           LOG_E(UDP_, "Sending current time: %ld failed! send_timestamp: %zd\n", current_millisecond, send_timestamp);
         }
 
-
-        // // 已经存完了表之后
-        // MyHashSetIterator itt;
-        // MyHashSetIterator * it = &itt;
-        // it->index = 0;
-        // it->set = sendSet;
-        // it->current = sendSet->dataList[0]->first;
-        // it->count = 0;
-        // int x = 0;
-        // while(myHashSetIteratorHasNext(it)) {
-        //     x++;
-
-        //     // printf("begin get node \n\n\n");
-        //     MyNode *node = myHashSetIteratorNext(it);
-
-        // //        uint8_t *flow_key = node->data;
-        //     printf("\n%ld   \n", node->samplingData.lastSamplingTime);
-        // }
-        // return 0;
 }
 
 /*
@@ -771,7 +748,10 @@ void *udp_eNB_task(void *args_p)
 
 
         /*-----------------修改丢包率的TOS标志位---------------*/
+        pthread_mutex_lock(&send_mutex);
         send_insert_flag(udp_data_req_p, &sendSet);
+        pthread_mutex_unlock(&send_mutex);
+        
         
 
 
@@ -794,11 +774,12 @@ void *udp_eNB_task(void *args_p)
 		
 		
         // 插入数据
+        pthread_mutex_lock(&send_mutex);
         measure_packet((uint8_t *)(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8), 
                             &sendSet, sock, &send_mutex, &send_elastic_sketch);
         // 调用复制数据包的程序发送复制后的数据包
         delay_measure_send(udp_data_req_p, &sendSet,(struct sockaddr *)&peer_addr, udp_sd);
-        
+        pthread_mutex_unlock(&send_mutex);
 		
 		
 		

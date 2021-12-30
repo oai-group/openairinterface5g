@@ -410,7 +410,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
     int is_ipv4_packet = extract_packet_key(packet,&packet_key);
     if (is_ipv4_packet == 0){
 
-    pthread_mutex_lock(mutex);
+    // pthread_mutex_lock(mutex);
     uint8_t flow_key[14]={'0'};
     packet_key_to_char(&packet_key, &flow_key);
 
@@ -420,7 +420,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
       //////////////////
       myHashSetAddData(Set, &flow_key);
       if((packet[1] & 0x06) == 0x06){
-          pthread_mutex_unlock(mutex);
+        //   pthread_mutex_unlock(mutex);
           return ;
       }
       
@@ -509,7 +509,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
       free(nowtime);
       free(packet_1);
     }
-    pthread_mutex_unlock(mutex);
+    // pthread_mutex_unlock(mutex);
     
   }
 }
