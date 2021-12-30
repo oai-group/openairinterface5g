@@ -384,22 +384,25 @@ uint64_t send_insert_flag(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet, ui
 
   // 判断当前TOS标志位为1或者0
   flag = myHashSetGetSendPLRFlag(sendSet, flow_key);
+  // 将TOS的8bit取出来 将最高位置1
+  TOS_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
   if (flag == 1) {
-      // 将TOS的8bit取出来 将最高位置1
-      TOS_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
-      TOS_flag |= 0x01;
-      // 将改过的标志位放回到IP头部
-      memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 9, &TOS_flag, 1);
-      // 重新计算ip头部校验和
-      memcpy(&ip_header, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8, 20);
-      // 将原来的校验和变为00
-      ip_header[5] = 0x0000;
-      // 使用check_ip_sum计算校验和 函数在最前面
-      new_checksum = check_ip_sum(ip_header, 20);
-      // 将新的校验和放到ip头部
-      memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 18, &new_checksum, 2);
-      // 上面已经将 TOS的最高位置1并且 重新计算了IP头部的校验和
+    TOS_flag |= 0x01;
+  } else {
+    TOS_flag &= 0xfe;
   }
+  
+  // 将改过的标志位放回到IP头部
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 9, &TOS_flag, 1);
+  // 重新计算ip头部校验和
+  memcpy(&ip_header, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 8, 20);
+  // 将原来的校验和变为00
+  ip_header[5] = 0x0000;
+  // 使用check_ip_sum计算校验和 函数在最前面
+  new_checksum = check_ip_sum(ip_header, 20);
+  // 将新的校验和放到ip头部
+  memcpy(&udp_data_req_p->buffer[udp_data_req_p->buffer_offset] + 18, &new_checksum, 2);
+  // 上面已经将 TOS的最高位置1并且 重新计算了IP头部的校验和
 } 
 
 
@@ -419,22 +422,24 @@ uint64_t send_insert_flag_new_buffer(udp_data_req_t *udp_data_req_p, uint8_t* ne
 
   // 判断当前TOS是0还是1
   flag = myHashSetGetSendPLRFlag(sendSet, flow_key);
+  // 将TOS的8bit取出来 将最高位置1
+  TOS_flag = new_ip_data[9];
   if (flag == 1) {
-      // 将TOS的8bit取出来 将最高位置1
-      TOS_flag = new_ip_data[9];
       TOS_flag |= 0x01;
-      // 将改过的标志位放回到IP头部
-      memcpy(&new_ip_data[9], &TOS_flag, 1);
-      // 重新计算ip头部校验和
-      memcpy(&ip_header, &new_ip_data[8], 20);
-      // 将原来的校验和变为00
-      ip_header[5] = 0x0000;
-      // 使用check_ip_sum计算校验和 函数在最前面
-      new_checksum = check_ip_sum(ip_header, 20);
-      // 将新的校验和放到ip头部
-      memcpy(&new_ip_data[18], &new_checksum, 2);
-      // 上面已经将 TOS的最高位置1并且 重新计算了IP头部的校验和
+  } else {
+      TOS_flag &= 0xfe;
   }
+  // 将改过的标志位放回到IP头部
+  memcpy(&new_ip_data[9], &TOS_flag, 1);
+  // 重新计算ip头部校验和
+  memcpy(&ip_header, &new_ip_data[8], 20);
+  // 将原来的校验和变为00
+  ip_header[5] = 0x0000;
+  // 使用check_ip_sum计算校验和 函数在最前面
+  new_checksum = check_ip_sum(ip_header, 20);
+  // 将新的校验和放到ip头部
+  memcpy(&new_ip_data[18], &new_checksum, 2);
+  // 上面已经将 TOS的最高位置1并且 重新计算了IP头部的校验和
 } 
 
 
