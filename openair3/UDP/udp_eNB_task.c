@@ -565,10 +565,23 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
           uint8_t new_ip_data[46];
 
           // 判断UDP的载荷是不是小于10 需要额外的buffer
-          if (packet_key.protocol == UDP_PROTOCOL_NUM &&  packet_key.packet_len < 10) {
+          if (packet_key.protocol == UDP_PROTOCOL_NUM && packet_key.packet_len < 10) {
+            printf("Before modify: \n");
+            for (int i = 0; i < 46; i++) {
+              printf("%x", new_ip_data[i]);
+            }
+            printf("\n");
+            
             current_millisecond = send_insert_timestamp(udp_data_req_p, 1, &new_ip_data);
             // 需要重新修改数组中的标志位为1
             send_insert_flag_new_buffer(udp_data_req_p, &new_ip_data, sendSet);
+
+            printf("After modify: \n");
+            for (int i = 0; i < 46; i++) {
+              printf("%x", new_ip_data[i]);
+            }
+            printf("\n");
+
             // 发送新的buffer中的数据
             send_timestamp = sendto(
                       udp_sd,
