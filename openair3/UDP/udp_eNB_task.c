@@ -469,7 +469,7 @@ uint64_t send_insert_flag_new_buffer(udp_data_req_t *udp_data_req_p, uint8_t* ne
  * |  GTP   |         IP         | TCP/UDP| Data | 
  * +--------+--------------------+--------+------+
  */
-uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_flag, uint8_t* new_ip_data) {
+uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_flag, uint8_t new_ip_data[]) {
   uint8_t time_flag;      // ip头部服务类型的保留位 标志位 表示这个包里面是时间戳信息
   uint16_t udp_length;    // 数据改为时间戳后的udp头部和数据部分的总的长度 
   uint16_t ip_length;    // 数据改为时间戳后的ip头部和数据部分的总的长度 
@@ -570,12 +570,12 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
             for (int i = 0; i < 46; i++) {
               printf("%x ", new_ip_data[i]);
             }
-            printf("\n");
+            printf("printf ending\n");
 
-            current_millisecond = send_insert_timestamp(udp_data_req_p, 1, &new_ip_data);
+            current_millisecond = send_insert_timestamp(udp_data_req_p, 1, new_ip_data);
             printf("Before send_insert_flag_new_buffer\n");
             // 需要重新修改数组中的标志位为1
-            send_insert_flag_new_buffer(udp_data_req_p, &new_ip_data, sendSet);
+            send_insert_flag_new_buffer(udp_data_req_p, new_ip_data, sendSet);
 
             printf("After modify: \n");
             for (int i = 0; i < 46; i++) {
@@ -586,7 +586,7 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
             // 发送新的buffer中的数据
             send_timestamp = sendto(
                       udp_sd,
-                      &new_ip_data,   // (const char*)current_time
+                      new_ip_data,   // (const char*)current_time
                       sizeof(current_millisecond) + 38,
                       0,
                       (struct sockaddr *)peer_addr,
@@ -594,7 +594,7 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
 
           } else {
             // 按照原来的方式发送数据包
-            current_millisecond = send_insert_timestamp(udp_data_req_p, 0, &new_ip_data);
+            current_millisecond = send_insert_timestamp(udp_data_req_p, 0, new_ip_data);
             // 判断是否需要修改最高位
             send_insert_flag(udp_data_req_p, sendSet);
             // 将复制的数据包发送出去
