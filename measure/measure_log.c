@@ -119,7 +119,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             
             //清除上个周期的丢包率，时延等统计信息
-            if(flag == 1 ){
+            if(type == 1 ){
             if(node->delayInfo){
                 mysqldb_insert_status(mysql, flow_key,
                                     node->delayInfo->NodeToNodeDelay/1000.0,
