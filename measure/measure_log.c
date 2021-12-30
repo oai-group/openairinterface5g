@@ -119,7 +119,11 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             
             //清除上个周期的丢包率，时延等统计信息
+            if(flag == 1 ){
             if(node->delayInfo){
+                mysqldb_insert_status(mysql, flow_key,
+                                    node->delayInfo->NodeToNodeDelay/1000.0,
+                                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
                 printf("2\n");   
 
                 printf("    %5d\t\n",node->plrData.realRecv);
@@ -131,13 +135,16 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                 free(node->delayInfo);
                 node->delayInfo = NULL;
             }else{
-                printf("4\n");   
+                printf("4\n");
+                mysqldb_insert_status(mysql, flow_key,
+                    -1.0,
+                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
 
                 printf("    %5d\t    %5d\t    null\t \n",node->plrData.realRecv, node->plrData.shouldRecv);
             }
-            
             node->plrData.realRecv = 0;
             node->plrData.shouldRecv = 0;
+            }
             // memset(&node->plrData,0,sizeof(PLRData));
 
 
@@ -314,6 +321,51 @@ void mysqldb_insert2(MYSQL *mysql, unsigned long time, double total_Bytes,double
     /* 拼接sql命令 */  
     sprintf(query, "%s%s%s%s", head, left, message, right);
     // printf("%s\n", query);  
+
+    t = mysql_real_query(mysql, query, strlen(query));
+    if (t) {  
+        printf("Failed to query: %s\n", mysql_error(mysql));  
+    } 
+    // else {
+    //     printf("\nInsert sucessfully!\n");
+    // }    
+}
+
+
+void mysqldb_insert_status(MYSQL *mysql, unsigned char *flow_key, double delay,double loss)
+{  
+    int t;  
+    char *head = "INSERT INTO ";  
+    char query[300];
+    char field[100] = "srcIP, dstIP, srcPort, dstPort, protocol, delay, loss";
+    char *left = "(";  
+    char *right = ") ";  
+    char *values = "VALUES";  
+    char *TABLE_NAME = "delayloss";
+    char message[200] = {0};
+    unsigned long srcIP = 0;
+    unsigned long dstIP = 0;
+    unsigned int srcPort = 0;
+    unsigned int dstPort = 0;
+    unsigned int protocol = 0;
+
+    srcIP = flow_key[0]*256*256*256UL + flow_key[1]*256*256 + flow_key[2]*256 + flow_key[3];    
+    dstIP = flow_key[4]*256*256*256UL + flow_key[5]*256*256 + flow_key[6]*256 + flow_key[7];  
+    protocol = flow_key[12];
+    srcPort = htons(*((uint16_t*)&(flow_key[8])));
+    dstPort = htons(*((uint16_t*)&(flow_key[10])));
+
+    char strend[200] = {0};
+    // sprintf(strend,"ON DUPLICATE KEY UPDATE averBytes=%.2lf ,averPkts=%.2lf",total_Bytes/5.0, total_Pkts/5.0);
+    // sprintf(strend,"ON DUPLICATE KEY UPDATE averBytes=%.2lf ,averPkts=%.2lf",total_Bytes/5.0, total_Pkts/5.0);
+
+
+
+    sprintf(message, "%lu, %lu, %u, %u, %u, %.2lf, %.2lf", srcIP, dstIP, srcPort, dstPort, protocol, delay, loss);
+    /* 拼接sql命令 */  
+    // sprintf(query, "%s%s%s%s%s%s%s%s%s%s", head, TABLE_NAME, left, field, right, values, left, message, right, strend);
+    sprintf(query, "%s%s%s%s%s%s%s%s%s", head, TABLE_NAME, left, field, right, values, left, message, right);
+    printf("%s\n", query);  
 
     t = mysql_real_query(mysql, query, strlen(query));
     if (t) {  
