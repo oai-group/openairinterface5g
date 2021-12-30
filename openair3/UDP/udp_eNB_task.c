@@ -77,6 +77,7 @@ pthread_mutex_t recv_mutex;
 pthread_mutex_t send_mutex;
 
 
+
 ElasticSketch recv_elastic_sketch;
 ElasticSketch send_elastic_sketch;
 
@@ -657,6 +658,8 @@ void *udp_eNB_task(void *args_p)
   // initHashSet(myHashCodeString, myEqualString, &sendSet);
   // initHashSet(myHashCodeString, myEqualString, &recvSet); // 接收表
     curr_eNB_id = 101;
+    pthread_mutex_t recv_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
   // 数据初始化
     Init_ElasticSketch(&recv_elastic_sketch, BUCKET_NUM, LIGHT_PART_COUNTER_NUM);
     initHashSet(myHashCodeString, myEqualString, &recvSet);
