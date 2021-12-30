@@ -327,21 +327,14 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
                       &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
       /////////////
 
-      printf("Before loss_measure_recv\n");
-
       // 调用丢包率的代码
       loss_measure_recv(udp_data_ind_p, &recvSet);
 
-      printf("After loss_measure_recv\n");
-      printf("Before delay_measure_recv\n");
-
       // 调用接收程序丢弃时间戳数据包
       int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
-      printf("After delay_measure_recv, flag : %d\n", flag);
       if(flag){
         return;
       }
-      printf("After delay_measure_recv return, flag : %d\n", flag);
 	  
 	  
 
@@ -485,9 +478,9 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
   // 发送时间戳的函数
   // 将ip的头部TOS的保留位设置为1(默认为0)表示这是一个时间戳的数据包 TOS 在第8位到16位公8位一个字节，最后一位16位为保留位
   time_flag = udp_data_req_p->buffer[udp_data_req_p->buffer_offset + 9];
-  printf("before time_flag: %x\n", time_flag);
+  // printf("before time_flag: %x\n", time_flag);
   time_flag = time_flag | 0x06;   // 把最后一位保留位变成1
-  printf("after time_flag: %x\n", time_flag);
+  // printf("after time_flag: %x\n", time_flag);
 
   // 获取当前的时间戳信息
   current_millisecond = getTimeUsec();
@@ -499,14 +492,10 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
 
   // 这里判断是否需要使用额外的buffer
   if (length_flag == 1) {
-    printf("length_flag == 1\n");
     // 此时的长度不够用 需要额外的buffer new_ip_data
     memcpy(&new_ip_data[36], &time_stamp_count, 1);  // 添加时间戳个数
-    printf("1\n");
     memcpy(&new_ip_data[37], &curr_eNB_id, 1);  // 添加eNB设备id
-    printf("2\n");
     memcpy(&new_ip_data[38], &current_millisecond, 8); // 添加时间戳
-    printf("3\n");
   } else {
     // 此时的长度是够用的 不需要额外的buffer
     // 把当前基站id和总的时间戳个数添加到数据部分
@@ -536,10 +525,8 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
 
   // 判断是否需要额外的buffer
   if (length_flag == 1) {
-    printf("4\n");
     // 需要
     memcpy(new_ip_data, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], 36);
-    printf("5\n");
   }
 
   return current_millisecond;
@@ -572,22 +559,9 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
 
           // 判断UDP的载荷是不是小于10 需要额外的buffer
           if (packet_key.protocol == UDP_PROTOCOL_NUM && packet_key.packet_len < 10) {
-            printf("Before modify: \n");
-            for (int i = 0; i < 46; i++) {
-              printf("%x ", new_ip_data[i]);
-            }
-            printf("printf ending\n");
-
             current_millisecond = send_insert_timestamp(udp_data_req_p, 1, new_ip_data);
-            printf("Before send_insert_flag_new_buffer\n");
             // 需要重新修改数组中的标志位为1
             send_insert_flag_new_buffer(udp_data_req_p, new_ip_data, sendSet);
-
-            printf("After modify: \n");
-            for (int i = 0; i < 46; i++) {
-              printf("%x ", new_ip_data[i]);
-            }
-            printf("\n");
 
             // 发送新的buffer中的数据
             send_timestamp = sendto(
