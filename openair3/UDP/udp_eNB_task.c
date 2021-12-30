@@ -500,9 +500,9 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
   // 这里判断是否需要使用额外的buffer
   if (length_flag == 1) {
     // 此时的长度不够用 需要额外的buffer new_ip_data
-    memcpy(&new_ip_data[36], &time_stamp_count, 1);  // 添加时间戳个数
-    memcpy(&new_ip_data[37], &curr_eNB_id, 1);  // 添加eNB设备id
-    memcpy(&new_ip_data[38], &current_millisecond, 8); // 添加时间戳
+    memcpy(new_ip_data[36], &time_stamp_count, 1);  // 添加时间戳个数
+    memcpy(new_ip_data[37], &curr_eNB_id, 1);  // 添加eNB设备id
+    memcpy(new_ip_data[38], &current_millisecond, 8); // 添加时间戳
   } else {
     // 此时的长度是够用的 不需要额外的buffer
     // 把当前基站id和总的时间戳个数添加到数据部分
@@ -533,7 +533,7 @@ uint64_t send_insert_timestamp(udp_data_req_t *udp_data_req_p, uint8_t length_fl
   // 判断是否需要额外的buffer
   if (length_flag == 1) {
     // 需要
-    memcpy(&new_ip_data, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], 36);
+    memcpy(new_ip_data, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], 36);
   }
 
   return current_millisecond;
@@ -562,23 +562,24 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p,
         uint64_t current_millisecond;
 
         if (flag == 1) {
-          uint8_t new_ip_data[46];
+          uint8_t new_ip_data[46] ={'0'};
 
           // 判断UDP的载荷是不是小于10 需要额外的buffer
           if (packet_key.protocol == UDP_PROTOCOL_NUM && packet_key.packet_len < 10) {
             printf("Before modify: \n");
             for (int i = 0; i < 46; i++) {
-              printf("%x", new_ip_data[i]);
+              printf("%x ", new_ip_data[i]);
             }
             printf("\n");
-            
+
             current_millisecond = send_insert_timestamp(udp_data_req_p, 1, &new_ip_data);
+            printf("Before send_insert_flag_new_buffer\n");
             // 需要重新修改数组中的标志位为1
             send_insert_flag_new_buffer(udp_data_req_p, &new_ip_data, sendSet);
 
             printf("After modify: \n");
             for (int i = 0; i < 46; i++) {
-              printf("%x", new_ip_data[i]);
+              printf("%x ", new_ip_data[i]);
             }
             printf("\n");
 
