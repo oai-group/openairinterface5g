@@ -586,7 +586,7 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet,
         }
 
         // 判断是否需要修改最高位
-        send_insert_flag(udp_data_req_p, sendSet);
+        send_insert_flag(udp_data_req_p, sendSet, flow_key);
         // 将复制的数据包发送出去
         send_timestamp = sendto(
                   udp_sd,
