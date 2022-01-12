@@ -40,12 +40,15 @@ void freeMyList(MyList * list)
 void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
 {
     
-    // printf("begin malloc1 \n\n\n");    
+    // printf("begin malloc1 \n\n\n"); 
+    printf("1\n");      
     MyNode * node = (MyNode *) malloc(sizeof(MyNode));
     // printf("malloc done");
     // node->data = data;
     memset(node,0,sizeof(MyNode));
+    printf("2\n");   
     memcpy(node->data,data,KEY_LENGTH);
+    printf("3\n");   
     node->isReceived = 1;
     // node->next = NULL;
     // node->isClassified = 0;

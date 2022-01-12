@@ -113,7 +113,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             }else{
                 printf("  %3d\t",flow_key[12]);
             }
-            printf("1\n");   
+            // printf("1\n");   
 
             printf("    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
             printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
@@ -124,18 +124,18 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                 mysqldb_insert_status(mysql, flow_key,
                                     node->delayInfo->NodeToNodeDelay/1000.0,
                                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
-                printf("2\n");   
+                // printf("2\n");   
 
                 printf("    %5d\t\n",node->plrData.realRecv);
 
                 printf("    %5d\t\n",node->plrData.shouldRecv);
                 printf("    %5ld\t \n",node->delayInfo->NodeToNodeDelay);
-                printf("3\n");   
+                // printf("3\n");   
 
                 free(node->delayInfo);
                 node->delayInfo = NULL;
             }else{
-                printf("4\n");
+                // printf("4\n");
                 mysqldb_insert_status(mysql, flow_key,
                     -1.0,
                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
@@ -148,7 +148,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             // memset(&node->plrData,0,sizeof(PLRData));
 
 
-            printf("5\n");   
+            // printf("5\n");   
             fprintf(fp,"\n");
             
 
@@ -365,7 +365,7 @@ void mysqldb_insert_status(MYSQL *mysql, unsigned char *flow_key, double delay,d
     /* 拼接sql命令 */  
     // sprintf(query, "%s%s%s%s%s%s%s%s%s%s", head, TABLE_NAME, left, field, right, values, left, message, right, strend);
     sprintf(query, "%s%s%s%s%s%s%s%s%s", head, TABLE_NAME, left, field, right, values, left, message, right);
-    printf("%s\n", query);  
+    // printf("%s\n", query);  
 
     t = mysql_real_query(mysql, query, strlen(query));
     if (t) {  
