@@ -610,6 +610,10 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
   int is_ipv4_packet;
   uint8_t flow_key[13]={'0'}; // 存五元组
 
+  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_ind_p->buffer[8]), &packet_key);  // is_ipv4_packet = 0; 表示ipv4
+  printf("\n is_ipv4_packet : %d\n", is_ipv4_packet);
+  if (is_ipv4_packet != 0) return 0;
+
 
   // 判断标志位 是否是复制的数据包
   if ((udp_data_ind_p->buffer[9] & 0x06) == 0x06) {
@@ -652,15 +656,10 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
     dData->NodeToNodeDelay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38]);
     printf("The breakpoint 7 \n");
 
-    is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_ind_p->buffer[8]), &packet_key);  // is_ipv4_packet = 0; 表示ipv4
-    printf("\n is_ipv4_packet : %d\n", is_ipv4_packet);
-
-    // 如果是ipv4的包
-    if (is_ipv4_packet == 0) {
-      packet_key_to_char(&packet_key, &flow_key);
-      dData->count = 1;   
-      int i = myHashSetAddDelayData(recvSet, flow_key, dData);
-    }
+    packet_key_to_char(&packet_key, &flow_key);
+    dData->count = 1;   
+    int i = myHashSetAddDelayData(recvSet, flow_key, dData);
+    
     // 释放内存
     LOG_W(UDP_, "Drop packets\n");
     printf("进入第一次free\n");
