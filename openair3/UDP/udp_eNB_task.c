@@ -588,16 +588,16 @@ int delay_measure_send(udp_data_req_t *udp_data_req_p, MyHashSet *sendSet,
           return;
         }
 
-        // 判断是否需要修改最高位
-        send_insert_flag(udp_data_req_p, sendSet, flow_key);
-        // 将复制的数据包发送出去
-        send_timestamp = sendto(
-                  udp_sd,
-                  &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],   // (const char*)current_time
-                  sizeof(current_millisecond) + 38,
-                  0,
-                  (struct sockaddr *)peer_addr,
-                  sizeof(struct sockaddr_in));
+        // // 判断是否需要修改最高位
+        // send_insert_flag(udp_data_req_p, sendSet, flow_key);
+        // // 将复制的数据包发送出去
+        // send_timestamp = sendto(
+        //           udp_sd,
+        //           &udp_data_req_p->buffer[udp_data_req_p->buffer_offset],   // (const char*)current_time
+        //           sizeof(current_millisecond) + 38,
+        //           0,
+        //           (struct sockaddr *)peer_addr,
+        //           sizeof(struct sockaddr_in));
 
         LOG_D(UDP_, "send_timestamp: %zd\n", send_timestamp);
         if (send_timestamp != sizeof(current_millisecond) + 38) {
