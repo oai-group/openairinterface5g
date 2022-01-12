@@ -50,8 +50,9 @@ int extract_packet_key(char* packet, packet_key_t* key){
 
     IP_header_parser(packet,&ip_header);
     trans_header_parser(packet,&trans_header);
+    key->packet_len = ip_header.total_len = 0;
 
-    if (ip_header.version == IP_VERSION_4){
+    if (ip_header.version == IP_VERSION_4 &&(ip_header.protocol == TCP_PROTOCOL_NUM||ip_header.protocol == UDP_PROTOCOL_NUM)){
 
         key->src_ip = ip_header.src_ip;
         key->dst_ip = ip_header.dst_ip;
