@@ -413,7 +413,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
 
 
     if(packet_key.packet_len > 0){
-      printf("\n BYTES num %d\n",packet_key.packet_len);
+      // printf("\n BYTES num %d\n",packet_key.packet_len);
       //////////////////
       myHashSetAddData(Set, &flow_key);
       if((packet[1] & 0x06) == 0x06){
