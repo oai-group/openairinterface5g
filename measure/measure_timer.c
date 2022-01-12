@@ -103,15 +103,31 @@ void* print_current_time(void* argv){
         timenow = gmtime(&now);
         //睡眠
         printf("\nmeasurement module is running, statistics will be saved in /measure_log/statistics_log.txt\n");
-        pthread_mutex_lock(send_mutex);  
-        save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0);
-        save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
-        pthread_mutex_unlock(send_mutex);
+        // pthread_mutex_lock(send_mutex);  
+        // save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0);
+        // // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
+        // pthread_mutex_unlock(send_mutex);
 
-        pthread_mutex_lock(recv_mutex);  
+        // pthread_mutex_lock(recv_mutex);  
+        // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
+        // pthread_mutex_unlock(recv_mutex);
+        //printf("have save once");
+        // printf("send log\n\n");
+        pthread_mutex_lock(send_mutex);
+        pthread_mutex_lock(recv_mutex);
+        printf("send log\n\n");
+        save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0);
+        printf("recv log\n\n");  
+        save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);  
+        
         // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
         pthread_mutex_unlock(recv_mutex);
-        //printf("have save once");
+        pthread_mutex_unlock(send_mutex);
+        
+        
+        // pthread_mutex_lock(recv_mutex);  
+        // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
+
     }
 
 
