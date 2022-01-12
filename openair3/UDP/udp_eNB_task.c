@@ -829,7 +829,7 @@ void *udp_eNB_task(void *args_p)
               udp_data_req_p->peer_port);
 //#endif
 
-        // 解析数据包
+        // 解析数据包 修改标志位 测量丢包率
         // is_ipv4_packet = 0; 表示ipv4
         int is_ipv4_packet;
         packet_key_t packet_key;
@@ -844,9 +844,7 @@ void *udp_eNB_task(void *args_p)
         /*-----------------修改丢包率的TOS标志位---------------*/
         send_insert_flag(udp_data_req_p, &sendSet, flow_key);
         pthread_mutex_unlock(&send_mutex);
-        
-  
-          
+            
         }
 
 
@@ -868,6 +866,7 @@ void *udp_eNB_task(void *args_p)
 		
 		
 
+        // 发送复制包 测量时延
         if (is_ipv4_packet == 0) {
           // 插入数据
           pthread_mutex_lock(&send_mutex);
