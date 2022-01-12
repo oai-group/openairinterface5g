@@ -339,8 +339,9 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
 
       // 调用接收程序丢弃时间戳数据包
       int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+      
       pthread_mutex_unlock(&recv_mutex);
-      // printf("After delay_measure_recv, flag : %d\n", flag);
+      printf("delay_measure_recv flag: %d\n", flag);
       if(flag){
         return;
       }
@@ -361,6 +362,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
        */
       /* look for HACK_RLC_UM_LIMIT for others places related to the hack. Please do not remove this comment. */
       if (itti_send_msg_to_task(udp_sock_pP->task_id, INSTANCE_DEFAULT, message_p) < 0) {
+        printf("进入第二次free\n");
         LOG_E(UDP_, "Failed to send message %d to task %d\n",
               UDP_DATA_IND,
               udp_sock_pP->task_id);
@@ -685,6 +687,7 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
     }
     // 释放内存
     LOG_W(UDP_, "Drop packets\n");
+    printf("进入第一次free\n");
     itti_free(TASK_UDP, message_p);
     itti_free(TASK_UDP, forwarded_buffer);
     return 1;
