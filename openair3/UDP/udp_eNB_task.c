@@ -73,8 +73,8 @@ MyHashSet sendSet;
 // MyHashSet Set;
 // pthread_mutex_t mutex;
 // ElasticSketch elastic_sketch;
-pthread_mutex_t recv_mutex;
-pthread_mutex_t send_mutex;
+// pthread_mutex_t recv_mutex;
+// pthread_mutex_t send_mutex;
 
 
 
@@ -84,6 +84,9 @@ ElasticSketch send_elastic_sketch;
 int sock;
 // enb id
 uint8_t curr_eNB_id;
+
+static  pthread_mutex_t recv_mutex = PTHREAD_MUTEX_INITIALIZER;
+static  pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
 ///////////////////////////////////////////
 
 // 计算校验和的函数
@@ -733,8 +736,8 @@ void *udp_eNB_task(void *args_p)
     // pthread_mutex_t recv_mutex = PTHREAD_MUTEX_INITIALIZER;
     // pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-    recv_mutex = PTHREAD_MUTEX_INITIALIZER;
-    send_mutex = PTHREAD_MUTEX_INITIALIZER;
+    // recv_mutex = PTHREAD_MUTEX_INITIALIZER;
+    // send_mutex = PTHREAD_MUTEX_INITIALIZER;
   // 数据初始化
     Init_ElasticSketch(&recv_elastic_sketch, BUCKET_NUM, LIGHT_PART_COUNTER_NUM);
     initHashSet(myHashCodeString, myEqualString, &recvSet);
