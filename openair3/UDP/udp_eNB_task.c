@@ -341,7 +341,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
       
       pthread_mutex_unlock(&recv_mutex);
-      printf("delay_measure_recv flag: %d\n", flag);
+      // printf("delay_measure_recv flag: %d\n", flag);
       if(flag){
         return;
       }
@@ -362,7 +362,6 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
        */
       /* look for HACK_RLC_UM_LIMIT for others places related to the hack. Please do not remove this comment. */
       if (itti_send_msg_to_task(udp_sock_pP->task_id, INSTANCE_DEFAULT, message_p) < 0) {
-        printf("进入第二次free\n");
         LOG_E(UDP_, "Failed to send message %d to task %d\n",
               UDP_DATA_IND,
               udp_sock_pP->task_id);
@@ -611,7 +610,7 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
   uint8_t flow_key[13]={'0'}; // 存五元组
 
   is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_ind_p->buffer[8]), &packet_key);  // is_ipv4_packet = 0; 表示ipv4
-  printf("\n is_ipv4_packet : %d\n", is_ipv4_packet);
+  // printf("\n is_ipv4_packet : %d\n", is_ipv4_packet);
   if (is_ipv4_packet != 0) return 0;
 
 
@@ -620,18 +619,15 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
     // 获取当前时间
     current_millisecond = getTimeUsec();
-    printf("current_millisecond : %ld\n", current_millisecond);
+    // printf("current_millisecond : %ld\n", current_millisecond);
 
     // 找到有多少个节点的时间戳信息
     int time_count = (uint8_t)(udp_data_ind_p->buffer[36]);
-    printf("time_count: %d \n", time_count);
-    printf("The breakpoint 1 \n");
+    // printf("time_count: %d \n", time_count);
 
     // 解析ip数据
     DelayData * dData = (DelayData *) malloc(sizeof(DelayData));
-    printf("The breakpoint 2 \n");
     memset(dData, 0, sizeof(DelayData));
-    printf("The breakpoint 3 \n");
 
     // 循环读取时间戳
     for (int i = 0; i < time_count - 1; i++) {
@@ -640,29 +636,25 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
       linkDelay.endNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * (i + 1)]);
       linkDelay.delay = *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * (i + 1)]) - *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * i]);
 
-      printf("The breakpoint 4 \n");
       dData->links[i] = linkDelay;
     }
-    printf("The breakpoint 5 \n");
+
     // 单独处理最后一个节点
     LinkDelay linkDelay;
     linkDelay.startNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * (time_count - 1)]);
     linkDelay.endNode = curr_eNB_id;
     linkDelay.delay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * (time_count - 1)]);
     dData->links[time_count - 1] = linkDelay;
-    printf("The breakpoint 6 \n");
 
     // 计算总的端到端的时延
     dData->NodeToNodeDelay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38]);
-    printf("The breakpoint 7 \n");
 
     packet_key_to_char(&packet_key, &flow_key);
     dData->count = 1;   
     int i = myHashSetAddDelayData(recvSet, flow_key, dData);
-    
+
     // 释放内存
     LOG_W(UDP_, "Drop packets\n");
-    printf("进入第一次free\n");
     itti_free(TASK_UDP, message_p);
     itti_free(TASK_UDP, forwarded_buffer);
     return 1;

@@ -40,15 +40,12 @@ void freeMyList(MyList * list)
 void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
 {
     
-    // printf("begin malloc1 \n\n\n"); 
-    printf("1\n");      
+    // printf("begin malloc1 \n\n\n");    
     MyNode * node = (MyNode *) malloc(sizeof(MyNode));
     // printf("malloc done");
     // node->data = data;
     memset(node,0,sizeof(MyNode));
-    printf("2\n");   
-    memcpy(node->data,data,KEY_LENGTH);
-    printf("3\n");   
+    memcpy(node->data,data,KEY_LENGTH);   
     node->isReceived = 1;
     // node->next = NULL;
     // node->isClassified = 0;
@@ -269,18 +266,12 @@ void* myListRemoveDataAtLast(MyList*  list)
 //删除在首部
 void* myListRemoveDataAtFirst(MyList *  list)
 {
-    printf("1");
     MyNode *p = list->first;
     list->first = p->next;
     void * re = p->data;
-    // printf("快要free了\n\n");
     if(p->delayInfo)
-        // printf("竟然free了\n\n");
         free(p->delayInfo);
-    // printf("free完成了\n\n");
-    // printf("快要free p了\n\n");
     free(p);
-    // printf("free p完成了\n\n");
     (list->count)--;
     if (list->count == 0)
     {
@@ -352,8 +343,6 @@ MyNode * myListFindDataIndex( MyList *  list, uint8_t * data)
     int re = 0;
         while (p)
     {
-        // printf("\n pdata%d%d%d%d  ",p->data[9],p->data[10],p->data[11],p->data[12]);
-        // printf("\n data%d%d%d%d   ",data[9],data[10],data[11],data[12]);
         // if (p->data == data || (*(list->equal))(p->data, data))
         if (myEqualString2(p->data, data))
         {
@@ -434,8 +423,6 @@ int myListRemoveDataObject(MyList*  list, uint8_t * data)
     int index = -1;
         while (p)
     {
-        // printf("\n pdata%d%d%d%d  ",p->data[9],p->data[10],p->data[11],p->data[12]);
-        // printf("\n data%d%d%d%d   ",data[9],data[10],data[11],data[12]);
         // if (p->data == data || (*(list->equal))(p->data, data))
         if (myEqualString2(p->data, data))
         {

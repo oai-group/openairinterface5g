@@ -37,8 +37,8 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         PreNode * preLast = NULL;
         // printf("change3 \n\n\n"); 
 
-        printf("index\t\tSrc IP\t\t  Dst IP\tProtocolt\tSrc port\tDst port\t");   
-        printf("realRecv   shouldRecv    delay \n");
+        // printf("index\t\tSrc IP\t\t  Dst IP\tProtocolt\tSrc port\tDst port\t");   
+        // printf("realRecv   shouldRecv    delay \n");
         while(myHashSetIteratorHasNext(it)){
             x++;
 
@@ -103,45 +103,42 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
             }
-            printf("%3d :   ", x);
-            printf("    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
-            printf("%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
-            if (flow_key[12] == 6){
-                printf("  TCP\t");
-            }else if (flow_key[12] == 17){
-                printf("  UDP\t");
-            }else{
-                printf("  %3d\t",flow_key[12]);
-            }
-            // printf("1\n");   
+            // printf("%3d :   ", x);
+            // printf("    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
+            // printf("%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
+            // if (flow_key[12] == 6){
+            //     printf("  TCP\t");
+            // }else if (flow_key[12] == 17){
+            //     printf("  UDP\t");
+            // }else{
+            //     printf("  %3d\t",flow_key[12]);
+            // }
 
-            printf("    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
-            printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
+            // printf("    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
+            // printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             
             //清除上个周期的丢包率，时延等统计信息
             if(type == 1 ){
             if(node->delayInfo){
                 mysqldb_insert_status(mysql, flow_key,
                                     node->delayInfo->NodeToNodeDelay/1000.0,
-                                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
-                // printf("2\n");   
+                                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
 
-                printf("    %5d\t\n",node->plrData.realRecv);
+                // printf("    %5d\t\n",node->plrData.realRecv);
 
-                printf("    %5d\t\n",node->plrData.shouldRecv);
-                printf("    %5ld\t \n",node->delayInfo->NodeToNodeDelay);
-                // printf("3\n");   
+                // printf("    %5d\t\n",node->plrData.shouldRecv);
+                // printf("    %5ld\t \n",node->delayInfo->NodeToNodeDelay);
 
                 free(node->delayInfo);
                 node->delayInfo = NULL;
-            }else{
-                // printf("4\n");
-                mysqldb_insert_status(mysql, flow_key,
-                    -1.0,
-                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
-
-                printf("    %5d\t    %5d\t    null\t \n",node->plrData.realRecv, node->plrData.shouldRecv);
             }
+            // else{
+            //     mysqldb_insert_status(mysql, flow_key,
+            //         -1.0,
+            //         node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
+
+            //     // printf("    %5d\t    %5d\t    null\t \n",node->plrData.realRecv, node->plrData.shouldRecv);
+            // }
             node->plrData.realRecv = 0;
             node->plrData.shouldRecv = 0;
             }
