@@ -620,6 +620,7 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
 
     // 找到有多少个节点的时间戳信息
     int time_count = (uint8_t)(udp_data_ind_p->buffer[36]);
+    printf("time_count: %d \n", time_count);
     printf("The breakpoint 1 \n");
 
     // 解析ip数据
