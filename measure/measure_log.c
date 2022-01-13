@@ -82,7 +82,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                 
                 // if(node->notReceived <= TIMEOUTSLOT){
                     // fprintf(fp,"   %10u\t    %5u", 0, 0);
-                    mysqldb_insert(mysql, flow_key, 0, 0);
+                    // mysqldb_insert(mysql, flow_key, 0, 0);
                 // }
             }
             else{
@@ -95,7 +95,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
 */
                     // fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     // fprintf(fp,"   %10f.1\t    %5.1f", result.tot_size/5.0,result.packet_num/5.0);
-                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                     node->totalTime = 0;
@@ -103,7 +103,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                 else{
                     // fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     // fprintf(fp,"   %10f.1\t    %5.1f", result.tot_size/5.0,result.packet_num/5.0);
-                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
@@ -116,7 +116,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             //清除上个周期的丢包率，时延等统计信息
             if(type == 1 ){
             if(node->delayInfo){
-                mysqldb_insert_status(mysql, flow_key,
+                // mysqldb_insert_status(mysql, flow_key,
                                     node->delayInfo->NodeToNodeDelay/1000.0,
                                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
 
@@ -202,7 +202,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         // fclose(fp);
         
         //将总的流量插入表
-        mysqldb_insert2(mysql, count,t_bytes/5.0,t_pkts/5.0, type);
+        // mysqldb_insert2(mysql, count,t_bytes/5.0,t_pkts/5.0, type);
         sketch->Clear(sketch);
 
         //删除节点，释放链表
