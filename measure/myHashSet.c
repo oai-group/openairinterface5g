@@ -189,6 +189,7 @@ int myHashSetAddDelayData(MyHashSet *  set, uint8_t*  flow_key, DelayData *delay
 int myHashSetAddSamplingData(MyHashSet *  set, uint8_t*  flow_key)
 {
     double p = 0.1;
+    // int p = 10;
     uint8_t *data = (uint8_t *) malloc(sizeof(uint8_t)*13);
 
     memcpy(data, flow_key, 13);
@@ -220,8 +221,9 @@ int myHashSetAddSamplingData(MyHashSet *  set, uint8_t*  flow_key)
             return 1;
         }
         else{
-            srand((unsigned)time(NULL));
-            double a = (rand()%10000)/(double)10000;
+            // srand((unsigned)time(NULL));
+            double a = (rand()%1000)/(double)1000;
+            // uint8_t a = rand() % 100;
             if(a < p){
                 re->samplingData.lastSamplingTime = nowtime;
                 return 1;
