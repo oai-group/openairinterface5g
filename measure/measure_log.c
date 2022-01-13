@@ -245,15 +245,9 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             q = nextq;
         }        
         
-
-
-        // printf("had close file\n");
-
-
-
     }
 
-
+    printf("measure_log close\n");
 }
 
 void mysqldb_insert(MYSQL *mysql, unsigned char *flow_key, double total_Bytes,double total_Pkts)
