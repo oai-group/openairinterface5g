@@ -9,16 +9,16 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
 	struct timeval tvStart, tvEnd;
     gettimeofday(&tvStart, NULL);
 
-    FILE* fp;
+    // FILE* fp;
     // myHashset * mySet = & Set;
-    if (type == 0){
-        fp = fopen(STATISTICS_LOG_FILE_SEND,"ab+");}
-    else if (type == 1){
-        fp = fopen(STATISTICS_LOG_FILE_RECV,"ab+");}
-    else{
-        fp = NULL;}
+    // if (type == 0){
+    //     fp = fopen(STATISTICS_LOG_FILE_SEND,"ab+");}
+    // else if (type == 1){
+    //     fp = fopen(STATISTICS_LOG_FILE_RECV,"ab+");}
+    // else{
+    //     fp = NULL;}
     
-    if (fp){
+    if (1){
         // printf("had output statisics\n");
         // fprintf(fp,"==========================the %d statisics============================\n",count);
 
