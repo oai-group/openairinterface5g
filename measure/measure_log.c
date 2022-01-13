@@ -117,8 +117,8 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             if(type == 1 ){
             if(node->delayInfo){
                 // mysqldb_insert_status(mysql, flow_key,
-                                    node->delayInfo->NodeToNodeDelay/1000.0,
-                                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
+                //                     node->delayInfo->NodeToNodeDelay/1000.0,
+                //                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
 
                 // printf("    %5d\t\n",node->plrData.realRecv);
 
