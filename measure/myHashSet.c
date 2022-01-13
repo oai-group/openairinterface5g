@@ -177,6 +177,9 @@ int myHashSetAddDelayData(MyHashSet *  set, uint8_t*  flow_key, DelayData *delay
             
         }
         re->delayInfo = delayInfo;
+        // 打印计算出来的时延信息
+        printf("MyHashSet 179 -> delayInfo->NodeToNodeDelay :  %lu\n", delayInfo->NodeToNodeDelay);
+
         // re->isReceived = 1;
     }
     free(data);

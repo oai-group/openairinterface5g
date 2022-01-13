@@ -126,8 +126,8 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
 
                 // printf("    %5d\t\n",node->plrData.realRecv);
 
-                // printf("    %5d\t\n",node->plrData.shouldRecv);
-                // printf("    %5ld\t \n",node->delayInfo->NodeToNodeDelay);
+                printf("measure_log 129 -> node->plrData.shouldRecv : %5d\t\n", node->plrData.shouldRecv);
+                printf("measure_log 130 -> node->delayInfo->NodeToNodeDelay : %5ld\t \n", node->delayInfo->NodeToNodeDelay);
 
                 free(node->delayInfo);
                 node->delayInfo = NULL;

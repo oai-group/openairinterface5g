@@ -652,6 +652,8 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
     packet_key_to_char(&packet_key, &flow_key);
     dData->count = 1;   
     int i = myHashSetAddDelayData(recvSet, flow_key, dData);
+    // 打印计算时延
+    printf("udp_eNB_task 656 -> dData->NodeToNodeDelay : %lu\n", dData->NodeToNodeDelay);
 
     // 释放内存
     LOG_W(UDP_, "Drop packets\n");
