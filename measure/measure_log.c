@@ -199,7 +199,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
 
 
 
-        fclose(fp);
+        // fclose(fp);
         
         //将总的流量插入表
         mysqldb_insert2(mysql, count,t_bytes/5.0,t_pkts/5.0, type);
