@@ -1,9 +1,13 @@
 #include "measure_log.h"
+#include <time.h>
 
 
 
 //type = 0 代表上行 type = 1 代表下行；
 void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type){
+    clock_t start_time, end_time; 
+    start_time = clock(); // 开始时间
+
     FILE* fp;
     // myHashset * mySet = & Set;
     if (type == 0){
@@ -103,16 +107,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
             }
-            // printf("%3d :   ", x);
-            // printf("    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
-            // printf("%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
-            // if (flow_key[12] == 6){
-            //     printf("  TCP\t");
-            // }else if (flow_key[12] == 17){
-            //     printf("  UDP\t");
-            // }else{
-            //     printf("  %3d\t",flow_key[12]);
-            // }
+
 
             // printf("    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
             // printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
@@ -246,6 +241,10 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         }        
         
     }
+
+    end_time = clock();  // 结束时间
+    /* 计算得出程序运行时间, 并将其输出到屏幕 */
+    printf("insert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
 
     printf("measure_log close\n");
 }
