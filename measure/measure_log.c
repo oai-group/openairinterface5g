@@ -1,12 +1,13 @@
 #include "measure_log.h"
-#include <time.h>
+#include <sys/time.h>
 
 
 
 //type = 0 代表上行 type = 1 代表下行；
 void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type){
-    clock_t start_time, end_time; 
-    start_time = clock(); // 开始时间
+    double dbCostms;
+	struct timeval tvStart, tvEnd;
+    gettimeofday(&tvStart, NULL);
 
     FILE* fp;
     // myHashset * mySet = & Set;
@@ -242,9 +243,10 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         
     }
 
-    end_time = clock();  // 结束时间
-    /* 计算得出程序运行时间, 并将其输出到屏幕 */
-    printf("insert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+    // 运行时间
+    gettimeofday(&tvEnd, NULL);
+	dbCostms = (double)(1000 * (tvEnd.tv_sec - tvStart.tv_sec) + ((tvEnd.tv_usec - tvStart.tv_usec) / 1000.0));
+	printf("insert MySQL timestamps : %-0.2f ms\n", dbCostms);
 
     printf("measure_log close\n");
 }
