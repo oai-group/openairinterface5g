@@ -125,10 +125,15 @@ void* print_current_time(void* argv){
 
         end_time = clock();  // 结束时间
         /* 计算得出程序运行时间, 并将其输出到屏幕 */
-        printf("insert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+        printf("\nread Struct time : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
         printf("measure_log close\n");
 
+
+        start_time = clock(); // 开始时间
+
         insertDataToDB(inData,conn_ptr);
+        end_time = clock();  // 结束时间
+        printf("\ninsert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
     }
 
 

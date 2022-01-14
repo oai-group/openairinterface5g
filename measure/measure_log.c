@@ -4,18 +4,17 @@
 
 //type = 0 代表上行 type = 1 代表下行；
 void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type,insertData *inData){
-    FILE* fp;
-    // myHashset * mySet = & Set;
-    if (type == 0){
-        fp = fopen(STATISTICS_LOG_FILE_SEND,"ab+");}
-    else if (type == 1){
-        fp = fopen(STATISTICS_LOG_FILE_RECV,"ab+");}
-    else{
-        fp = NULL;}
+    // FILE* fp;
+    // if (type == 0){
+    //     fp = fopen(STATISTICS_LOG_FILE_SEND,"ab+");}
+    // else if (type == 1){
+    //     fp = fopen(STATISTICS_LOG_FILE_RECV,"ab+");}
+    // else{
+    //     fp = NULL;}
     
-    if (fp){
+    if (1){
         // printf("had output statisics\n");
-        fprintf(fp,"==========================the %d statisics============================\n",count);
+        // fprintf(fp,"==========================the %d statisics============================\n",count);
 
         MyHashSetIterator itt;
         MyHashSetIterator * it = &itt;
@@ -30,7 +29,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         double t_bytes = 0;
         double t_pkts = 0;
 
-        fprintf(fp,"index\t\tSrc IP\t\t  Dst IP\tProtocolt\tSrc port\tDst port\tTotal Byte\tTotal Packet\n");
+        //fprintf(fp,"index\t\tSrc IP\t\t  Dst IP\tProtocolt\tSrc port\tDst port\tTotal Byte\tTotal Packet\n");
         delNode * head = NULL;
         delNode * last = NULL;
         PreNode * preHead = NULL;
@@ -50,7 +49,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             inData->size++;
             inHead->next = inData->head;
             inData->head = inHead;
-            memcpy(inHead->key,node->data,sizeof(KEY_LENGTH));
+            memcpy(&(inHead->key),(node->data),KEY_LENGTH);
             inHead->type = type;
 
             uint8_t * flow_key = node->data;
@@ -63,33 +62,33 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             else
                 node->notReceived +=1;
 
-            fprintf(fp,"%3d :   ", x);
-            fprintf(fp,"    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
-            fprintf(fp,"%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
-            if (flow_key[12] == 6){
-                fprintf(fp,"  TCP\t");
-            }else if (flow_key[12] == 17){
-                fprintf(fp,"  UDP\t");
-            }else{
-                fprintf(fp,"  %3d\t",flow_key[12]);
-            }
-            fprintf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
-            fprintf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
-            fprintf(fp," %1d %1d %1d ",node->notReceived,node->isReceived,node->isClassified);
+            // fprintf(fp,"%3d :   ", x);
+            // fprintf(fp,"    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
+            // fprintf(fp,"%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
+            // if (flow_key[12] == 6){
+            //     fprintf(fp,"  TCP\t");
+            // }else if (flow_key[12] == 17){
+            //     fprintf(fp,"  UDP\t");
+            // }else{
+            //     fprintf(fp,"  %3d\t",flow_key[12]);
+            // }
+            // fprintf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
+            // fprintf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
+            // fprintf(fp," %1d %1d %1d ",node->notReceived,node->isReceived,node->isClassified);
 
             FIVE_TUPLE fkey;
             memcpy(fkey.flow_id,flow_key,13);
             VAL_TYPE result = sketch->Query(sketch,&fkey);
             //这个周期没收到报文，直接输出0
             if(node->isReceived == 0){
-                    fprintf(fp,"   %10u\t    %5u", 0, 0);
+                    //fprintf(fp,"   %10u\t    %5u", 0, 0);
                     // mysqldb_insert(mysql, flow_key, 0, 0);
                     inHead->total_Bytes = 0;
                     inHead->total_Pkts = 0;
             }
             else{
                 if(node->isClassified == 1){
-                    fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
+                    //fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
 
                     inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
@@ -103,7 +102,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
                     inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
 
-                    fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
+                    //fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
 
                     t_bytes += result.tot_size/1.0/node->totalTime;
@@ -143,7 +142,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
 
 
             // printf("5\n");   
-            fprintf(fp,"\n");
+            //fprintf(fp,"\n");
             
 
 
@@ -498,7 +497,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
 }
 
 void insertDataToDB(insertData* inData,MYSQL *mysql){
-    printf("there are %u items need to be inserted to mysql Database",inData->size);
+    printf("there are %u items need to be inserted to mysql Database\n",inData->size);
 
     insertNode* head = NULL;
     while(inData->size > 0){
