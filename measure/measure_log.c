@@ -497,27 +497,27 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
   }
 }
 
-void insertDataToDB(insertData inData,MYSQL *mysql){
-    printf("there are %u items need to be inserted to mysql Database",inData.size);
+void insertDataToDB(insertData* inData,MYSQL *mysql){
+    printf("there are %u items need to be inserted to mysql Database",inData->size);
 
-    insertNode head = NULL;
-    while(inData.size > 0){
+    insertNode* head = NULL;
+    while(inData->size > 0){
         
-        head = inData.head;
+        head = inData->head;
 
-        inData.head = head.next;
-        inData.size--;
+        inData->head = head->next;
+        inData->size--;
         if(head == NULL){
             printf("\nhead is NULL\n");
             break;
         }
-        if(head.type == 0){
-            mysqldb_insert(mysql, head.key, head.total_Bytes, head.total_Pkts);
+        if(head->type == 0){
+            mysqldb_insert(mysql, head->key, head->total_Bytes, head->total_Pkts);
             
-        }else if(head.type == 1){
-            mysqldb_insert(mysql, head.key, head.total_Bytes, head.total_Pkts);
-            if(head.hasDelayInfo == 1){
-                mysqldb_insert_status(mysql, head.key,head.delay,head.loss); 
+        }else if(head->type == 1){
+            mysqldb_insert(mysql, head->key, head->total_Bytes, head->total_Pkts);
+            if(head->hasDelayInfo == 1){
+                mysqldb_insert_status(mysql, head->key,head->delay,head->loss); 
             }
         }else{
             printf("\nnode type is wrong!!\n ");

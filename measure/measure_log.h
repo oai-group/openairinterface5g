@@ -75,7 +75,7 @@ void mysqldb_insert2(MYSQL *mysql, unsigned long time, double total_Bytes,double
 void mysqldb_delete(MYSQL *mysql, unsigned char *flow_key);
 void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t *mutex,ElasticSketch *elastic_sketch);
 
-void insertDataToDB(insertData inData,MYSQL *mysql);
+void insertDataToDB(insertData* inData,MYSQL *mysql);
 
 #endif
 

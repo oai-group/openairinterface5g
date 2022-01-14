@@ -78,6 +78,7 @@ void* print_current_time(void* argv){
     printf("\n");
     printf("%s\n", buf);
     printf("\n");
+    
 
 
     time_t now;
