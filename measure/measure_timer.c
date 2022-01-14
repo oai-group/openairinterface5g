@@ -93,7 +93,18 @@ void* print_current_time(void* argv){
     fclose(fp2);
 
 
-
+    // 1、使用socket()函数获取一个socket文件描述符
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (-1 == sockfd)
+    {
+        printf("socket open err.");
+        return -1;
+    }
+    // 2. 准备接收方的地址和端口，'192.168.0.107'表示目的ip地址，8266表示目的端口号
+    struct sockaddr_in sock_addr = {0};
+    sock_addr.sin_family = AF_INET;                         // 设置地址族为IPv4
+    sock_addr.sin_port = htons(50000);                      // 设置地址的端口号信息
+    sock_addr.sin_addr.s_addr = inet_addr("127.0.0.1");     //　设置IP地址
 
     while(1){ 
         
@@ -117,13 +128,13 @@ void* print_current_time(void* argv){
         
         printf("send log\n\n");
         pthread_mutex_lock(send_mutex);
-        save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0);
+        save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0, sockfd, sock_addr);
         pthread_mutex_unlock(send_mutex);
 
 
         printf("recv log\n\n");  
         pthread_mutex_lock(recv_mutex);
-        save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);  
+        save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1, sockfd, sock_addr);  
         pthread_mutex_unlock(recv_mutex);
         
         

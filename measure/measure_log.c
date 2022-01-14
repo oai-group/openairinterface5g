@@ -4,10 +4,13 @@
 
 
 //type = 0 代表上行 type = 1 代表下行；
-void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type){
+void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type, int sockfd, struct sockaddr_in sock_addr){
     double dbCostms;
 	struct timeval tvStart, tvEnd;
     gettimeofday(&tvStart, NULL);
+
+    int ret = -1;
+    char sendbuf[]={"hello world, I am UDP."};
 
     // FILE* fp;
     // myHashset * mySet = & Set;
@@ -80,6 +83,8 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             //这个周期没收到报文，直接输出0
             if(node->isReceived == 0){
                 
+                ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
+
                 // if(node->notReceived <= TIMEOUTSLOT){
                     // fprintf(fp,"   %10u\t    %5u", 0, 0);
                     // mysqldb_insert(mysql, flow_key, 0, 0);
@@ -93,9 +98,11 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     t_bytes += result.tot_size;
                     t_pkts += result.packet_num;
 */
+                    ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
                     // fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     // fprintf(fp,"   %10f.1\t    %5.1f", result.tot_size/5.0,result.packet_num/5.0);
                     // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                     node->totalTime = 0;
@@ -104,6 +111,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     // fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     // fprintf(fp,"   %10f.1\t    %5.1f", result.tot_size/5.0,result.packet_num/5.0);
                     // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
@@ -119,7 +127,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                 // mysqldb_insert_status(mysql, flow_key,
                 //                     node->delayInfo->NodeToNodeDelay/1000.0,
                 //                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
-
+                ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
                 // printf("    %5d\t\n",node->plrData.realRecv);
 
                 printf("measure_log 129 -> node->plrData.shouldRecv : %5d\t\n", node->plrData.shouldRecv);
@@ -132,7 +140,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             //     mysqldb_insert_status(mysql, flow_key,
             //         -1.0,
             //         node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv)));
-
+            ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
             //     // printf("    %5d\t    %5d\t    null\t \n",node->plrData.realRecv, node->plrData.shouldRecv);
             // }
             node->plrData.realRecv = 0;
@@ -203,6 +211,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
         
         //将总的流量插入表
         // mysqldb_insert2(mysql, count,t_bytes/5.0,t_pkts/5.0, type);
+        ret = sendto(sockfd, sendbuf, sizeof(sendbuf), 0, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
         sketch->Clear(sketch);
 
         //删除节点，释放链表

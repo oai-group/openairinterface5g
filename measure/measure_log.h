@@ -38,7 +38,7 @@ typedef struct PreserveNode
     struct PreserveNode *next;
 } PreNode;
 // 0 = send ,1 = recv
-void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type);
+void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type, int sockfd, struct sockaddr_in sock_addr);
 
 void mysqldb_insert(MYSQL *mysql, unsigned char *flow_key, double total_Bytes,double total_Pkts);
 void mysqldb_insert2(MYSQL *mysql, unsigned long time, double total_Bytes,double total_Pkts, int type);
