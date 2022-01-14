@@ -3,7 +3,7 @@
 
 
 //type = 0 代表上行 type = 1 代表下行；
-void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type){
+void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type,insertData *inData){
     FILE* fp;
     // myHashset * mySet = & Set;
     if (type == 0){
@@ -45,6 +45,14 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             // printf("begin get node \n\n\n");    
             MyNode* node = myHashSetIteratorNext(it);
 
+            insertNode *inHead = (insertNode *) malloc(sizeof(insertNode));
+            memset(inHead,0,sizeof(insertNode));
+            inData->size++;
+            inHead->next = inData->head;
+            inData->head = inHead;
+            memcpy(inHead->key,node->data,sizeof(KEY_LENGTH));
+            inHead->type = type;
+
             uint8_t * flow_key = node->data;
 
             node->totalTime += 1;
@@ -74,57 +82,46 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             VAL_TYPE result = sketch->Query(sketch,&fkey);
             //这个周期没收到报文，直接输出0
             if(node->isReceived == 0){
-                
-                // if(node->notReceived <= TIMEOUTSLOT){
                     fprintf(fp,"   %10u\t    %5u", 0, 0);
-                    mysqldb_insert(mysql, flow_key, 0, 0);
-                // }
+                    // mysqldb_insert(mysql, flow_key, 0, 0);
+                    inHead->total_Bytes = 0;
+                    inHead->total_Pkts = 0;
             }
             else{
                 if(node->isClassified == 1){
-/*
-                    fprintf(fp,"   %10.1f\t    %5.2f", result.tot_size/5.0,result.packet_num/5.0);
-                    mysqldb_insert(mysql, flow_key, result.tot_size, result.packet_num);
-                    t_bytes += result.tot_size;
-                    t_pkts += result.packet_num;
-*/
                     fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
-                    // fprintf(fp,"   %10f.1\t    %5.1f", result.tot_size/5.0,result.packet_num/5.0);
-                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+
+                    inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
+                    inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
+
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                     node->totalTime = 0;
                 }
                 else{
+                    inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
+                    inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
+
                     fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
-                    // fprintf(fp,"   %10f.1\t    %5.1f", result.tot_size/5.0,result.packet_num/5.0);
-                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                 }
             }
-            // printf("%3d :   ", x);
-            // printf("    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
-            // printf("%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
-            // if (flow_key[12] == 6){
-            //     printf("  TCP\t");
-            // }else if (flow_key[12] == 17){
-            //     printf("  UDP\t");
-            // }else{
-            //     printf("  %3d\t",flow_key[12]);
-            // }
-
-            // printf("    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
-            // printf("    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             
             //清除上个周期的丢包率，时延等统计信息
             if(type == 1 ){
             if(node->delayInfo){
-                mysqldb_insert_status(mysql, flow_key,
-                                    node->delayInfo->NodeToNodeDelay/1000.0,
-                                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
+                // mysqldb_insert_status(mysql, flow_key,
+                //                     node->delayInfo->NodeToNodeDelay/1000.0,
+                //                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
 
-                // printf("    %5d\t\n",node->plrData.realRecv);
+
+                inHead->delay = node->delayInfo->NodeToNodeDelay/1000.0;
+                inHead->loss = node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv));
+                inHead->hasDelayInfo = 1;
 
                 printf("measure_log 129 -> node->plrData.shouldRecv : %5d\t\n", node->plrData.shouldRecv);
                 printf("measure_log 130 -> node->delayInfo->NodeToNodeDelay : %5ld\t \n", node->delayInfo->NodeToNodeDelay);
@@ -191,14 +188,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     preLast = temp;
                 }                
             }                            
-
-
-
-            node->isReceived = 0;
-
-            // if(node->isClassified == 1){
-            //     continue;
-            // }                
+            node->isReceived = 0;            
         }
 
 
@@ -291,6 +281,8 @@ void mysqldb_insert(MYSQL *mysql, unsigned char *flow_key, double total_Bytes,do
     //     printf("\nInsert sucessfully!\n");
     // }    
 }
+
+//插入总流量
 void mysqldb_insert2(MYSQL *mysql, unsigned long time, double total_Bytes,double total_Pkts,int type)
 {  
     int t;
@@ -322,7 +314,7 @@ void mysqldb_insert2(MYSQL *mysql, unsigned long time, double total_Bytes,double
     // }    
 }
 
-
+//插入时延，丢包率等状态信息
 void mysqldb_insert_status(MYSQL *mysql, unsigned char *flow_key, double delay,double loss)
 {  
     int t;  
@@ -503,4 +495,35 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
     // pthread_mutex_unlock(mutex);
     
   }
+}
+
+void insertDataToDB(insertData inData,MYSQL *mysql){
+    printf("there are %u items need to be inserted to mysql Database",inData.size);
+
+    insertNode head = NULL;
+    while(inData.size > 0){
+        
+        head = inData.head;
+
+        inData.head = head.next;
+        inData.size--;
+        if(head == NULL){
+            printf("\nhead is NULL\n");
+            break;
+        }
+        if(head.type == 0){
+            mysqldb_insert(mysql, head.key, head.total_Bytes, head.total_Pkts);
+            
+        }else if(head.type == 1){
+            mysqldb_insert(mysql, head.key, head.total_Bytes, head.total_Pkts);
+            if(head.hasDelayInfo == 1){
+                mysqldb_insert_status(mysql, head.key,head.delay,head.loss); 
+            }
+        }else{
+            printf("\nnode type is wrong!!\n ");
+        }
+
+        free(head);
+
+    }
 }

@@ -93,7 +93,9 @@ void* print_current_time(void* argv){
     fclose(fp2);
 
 
-
+    insertData *inData = (insertData *)malloc(sizeof(insertData));
+    memset(inData,0,sizeof(insertData));
+    
 
     while(1){ 
         
@@ -103,49 +105,26 @@ void* print_current_time(void* argv){
         timenow = gmtime(&now);
         //睡眠
         printf("\nmeasurement module is running, statistics will be saved in /measure_log/statistics_log.txt\n");
-        // pthread_mutex_lock(send_mutex);  
-        // save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0);
-        // // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
-        // pthread_mutex_unlock(send_mutex);
-
-        // pthread_mutex_lock(recv_mutex);  
-        // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
-        // pthread_mutex_unlock(recv_mutex);
-        //printf("have save once");
-        // printf("send log\n\n");
         pthread_mutex_lock(send_mutex);
-        pthread_mutex_lock(recv_mutex);
         printf("send log\n\n");
-        save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0);
+        save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0,inData);
+        pthread_mutex_unlock(send_mutex);
+
+
+        pthread_mutex_lock(recv_mutex);
         printf("recv log\n\n");  
-        save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);  
+        save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1,inData);  
         
         // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
         pthread_mutex_unlock(recv_mutex);
-        pthread_mutex_unlock(send_mutex);
-        
-        
-        // pthread_mutex_lock(recv_mutex);  
-        // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
 
+        insertDataToDB(inData,conn_ptr);
     }
 
 
 }
 
-//创建并启动定时器线程
-// void measure_timer_create(int time_val,MyHashSet *Set, ElasticSketch *sketch,pthread_mutex_t* mutex,int sock, int type){
-//     pthread_t measure_timer_thread;
 
-//     timer_param.time_val = time_val;
-//     timer_param.Set = Set;
-//     timer_param.sketch = sketch;
-//     timer_param.mutex = mutex;
-//     timer_param.sock = sock;
-//     timer_param.type = type;
-    
-//     pthread_create(&measure_timer_thread,NULL,print_current_time,&timer_param);
-// }
 
 
 void measure_timer_create(  int time_val,

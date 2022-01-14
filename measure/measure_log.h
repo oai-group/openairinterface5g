@@ -37,21 +37,45 @@ typedef struct PreserveNode
     VAL_TYPE val;
     struct PreserveNode *next;
 } PreNode;
+
+typedef struct insertNode
+{
+    /* key */
+    // 0 上行   1 下行
+    uint8_t type;
+    uint8_t hasDelayInfo;
+
+
+
+    uint8_t  key[KEY_LENGTH];
+    //volume data
+    double total_Bytes;
+    double total_Pkts;
+
+    double delay;
+    double loss;
+
+    //status data
+
+
+    struct insertNode *next;
+}insertNode;
+
+typedef struct insertData{
+    uint32_t size;
+    insertNode* head;
+}insertData;
+
 // 0 = send ,1 = recv
-void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type);
+void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type, insertData *inData);
+// void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type, insertNode *head);
 
 void mysqldb_insert(MYSQL *mysql, unsigned char *flow_key, double total_Bytes,double total_Pkts);
 void mysqldb_insert2(MYSQL *mysql, unsigned long time, double total_Bytes,double total_Pkts, int type);
 void mysqldb_delete(MYSQL *mysql, unsigned char *flow_key);
 void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t *mutex,ElasticSketch *elastic_sketch);
-// void test_show();
-// void show_packet_key(packet_key_t* key);
 
-// void show_flow_key(uint8_t* flow_key);
-// void show_flow_cnt(uint8_t* flow_key, int cnt);
-// void show_num(int i);
-// void show_timer_num(int i);
-// void show_timer_time(char* str);
+void insertDataToDB(insertData inData,MYSQL *mysql);
 
 #endif
 
