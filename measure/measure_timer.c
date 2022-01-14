@@ -104,7 +104,11 @@ void* print_current_time(void* argv){
         time(&now);
         timenow = gmtime(&now);
         //睡眠
+
         printf("\nmeasurement module is running, statistics will be saved in /measure_log/statistics_log.txt\n");
+
+        clock_t start_time, end_time; 
+        start_time = clock(); // 开始时间
         pthread_mutex_lock(send_mutex);
         printf("send log\n\n");
         save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0,inData);
@@ -117,6 +121,11 @@ void* print_current_time(void* argv){
         
         // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
         pthread_mutex_unlock(recv_mutex);
+
+        end_time = clock();  // 结束时间
+        /* 计算得出程序运行时间, 并将其输出到屏幕 */
+        printf("insert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+        printf("measure_log close\n");
 
         insertDataToDB(inData,conn_ptr);
     }
