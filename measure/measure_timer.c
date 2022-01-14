@@ -64,6 +64,7 @@ void* print_current_time(void* argv){
 		}
 		//return -2;
 	}
+    // mysql_autocommit(&mysql, 0);
     char query[100] = "truncate table measure";
     mysql_real_query(conn_ptr,"truncate table measure",strlen(query));
     char query2[100] = "truncate table total";
@@ -73,6 +74,7 @@ void* print_current_time(void* argv){
     char query4[100] = "truncate table total_recv";
     mysql_real_query(conn_ptr,"truncate table total_recv",strlen(query4));
     printf("have clear table measure, total in mytestdb\n");
+    // mysql_commit(&mysql);
     char buf[ 1024 ];
     getcwd(buf, 1024);
     printf("\n");
@@ -111,6 +113,7 @@ void* print_current_time(void* argv){
         clock_t start_time, end_time; 
         start_time = clock(); // 开始时间
         pthread_mutex_lock(send_mutex);
+        mysql_query(conn_ptr,"START TRANSACTION;");
         printf("send log\n\n");
         save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0,inData);
         pthread_mutex_unlock(send_mutex);
@@ -132,8 +135,11 @@ void* print_current_time(void* argv){
         start_time = clock(); // 开始时间
 
         insertDataToDB(inData,conn_ptr);
+        mysql_query(conn_ptr, "COMMIT;");
+        // mysql_commit(&mysql);
         end_time = clock();  // 结束时间
         printf("\ninsert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+        
     }
 
 
