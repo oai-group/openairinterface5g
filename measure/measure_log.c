@@ -49,7 +49,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             inData->size++;
             inHead->next = inData->head;
             inData->head = inHead;
-            memcpy(&(inHead->key),(node->data),KEY_LENGTH);
+            memcpy(inHead->key,node->data,KEY_LENGTH);
             inHead->type = type;
 
             uint8_t * flow_key = node->data;
