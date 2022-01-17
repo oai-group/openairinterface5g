@@ -67,7 +67,7 @@ typedef struct insertData{
 }insertData;
 
 
-typedef struct recvPackectHeadNode{
+typedef struct recvPacketHeadNode{
     uint8_t  key[KEY_LENGTH];
 
     uint32_t packetLength;//报文长度
@@ -82,16 +82,16 @@ typedef struct recvPackectHeadNode{
 
     DelayData *dData; //正常报文没有
 
-    recvPackectHeadNode *next;
+    recvPacketHeadNode *next;
 
 
-}recvPackectHeadNode;
+}recvPacketHeadNode;
 
 typedef struct tmpRecvData{
     uint32_t size;
 
-    recvPackectHeadNode *head;
-    recvPackectHeadNode *tail;
+    recvPacketHeadNode *head;
+    recvPacketHeadNode *tail;
 
 }tmpRecvData;
 
