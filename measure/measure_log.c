@@ -532,7 +532,7 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
 
     while (tmp.size != 0)
     {
-        recvPackectHeadNode *node = tmp.head;
+        recvPacketHeadNode *node = tmp.head;
         myHashSetAddData(Set, node->key);
 
         if(node->packetType == 0){
@@ -626,14 +626,15 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
                 free(fkey);
                 free(packet_1);
                 
-            }
-
-            //丢包率测量
-            myHashSetAddRecvPLRData(Set,node->key,node->flag);
+            }  
         }else if(node->packetType = 1){
 
 
+
+
         }
+        //丢包率测量
+            myHashSetAddRecvPLRData(Set,node->key,node->flag);
     }
     
 }
