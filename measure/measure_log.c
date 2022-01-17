@@ -526,3 +526,114 @@ void insertDataToDB(insertData* inData,MYSQL *mysql){
 
     }
 }
+
+
+void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *elastic_sketch){
+
+    while (tmp.size != 0)
+    {
+        recvPackectHeadNode *node = tmp.head;
+        myHashSetAddData(Set, node->key);
+
+        if(node->packetType == 0){
+            /*  是普通报文
+                插入长度和时间等数据
+            */
+           //报文大小测量
+            if(node->packetLength > 0){
+
+
+                // myHashSetAddData(Set, &flow_key);
+                FIVE_TUPLE *fkey = (FIVE_TUPLE *)malloc(sizeof(FIVE_TUPLE));
+
+                memcpy(fkey->flow_id,node->key,13);
+
+
+                // struct timespec *nowtime = (struct timespec *) malloc(sizeof(struct timespec ));
+                // // struct timespec nowtime;          
+                // clock_gettime(CLOCK_REALTIME, nowtime);
+                PACKET_INFO *packet_1 = (PACKET_INFO *)malloc(sizeof(PACKET_INFO ));
+
+                // PACKET_INFO packet_1;
+                memset(packet_1, 0, sizeof(PACKET_INFO));
+                packet_1->size = node->packetLength;
+                packet_1->arrived_time = node->nowtime;
+
+                // printf("\n\n packet set done\n\n");
+                (*elastic_sketch).Insert(elastic_sketch, fkey, packet_1);
+                
+                VAL_TYPE result = (*elastic_sketch).Query(elastic_sketch,fkey);
+                
+
+                if(result.packet_num == 10 && !myHashSetIsClassified(Set, node->key)){
+                    setNodeClassified(Set, node->key);
+                    //  printf("\n\n had 10 packet\n\n");
+                    TransData *TD = (TransData*)malloc(sizeof(TransData));
+                    // printf("sizeof(TransData) %d\n\n\n",sizeof(TransData));
+                    int lenthSum;
+                    long timeIntervalSum;
+                    lenthSum = 0;
+                    timeIntervalSum = 0;
+                    long timeInterval[9]={0};
+                    // printf("top 10 packet");
+                    for(int i=0; i<9 ;i++){
+                        
+                        struct timespec first = result.top_10_packets[i].arrived_time;
+                        struct timespec next = result.top_10_packets[i+1].arrived_time;
+                        // printf("top %d packet time %ld\n\n",i+1,first.tv_nsec);
+                        timeInterval[i] = (next.tv_sec - first.tv_sec)*1000000000L + (next.tv_nsec - first.tv_nsec);
+                        // printf("top %d  timeinter %ld\n\n",i+1,timeInterval[i]);
+                        timeIntervalSum += timeInterval[i];
+                    }
+                    int lenList[10] = {0};
+                    for(int i=0; i<10 ;i++){
+                        // printf("top %d packet len %ld\n",i+1,result.top_10_packets[i].size);
+                        lenList[i] = result.top_10_packets[i].size;
+                        // printf("top %d  sizer %d\n\n",i+1,lenList[i]);
+                        lenthSum += lenList[i];
+                    }
+                    qsort(lenList,10,sizeof(int), cmp_int);
+                    qsort(timeInterval,9,sizeof(long), cmp_int);
+                    TD->maxLenth = lenList[9];
+                    TD->minLenth = lenList[0];
+                    TD->averLenth = lenthSum/10.0;
+                    TD->MedianLenth = lenList[4];
+                    float var = 0;
+                    for(int i=0; i<10 ;i++){
+                        var += (lenList[i] - TD->averLenth)*(lenList[i]-TD->averLenth);
+                    }
+                    TD->varLenth = sqrt(var/10);
+
+
+                    TD->maxInterval = timeInterval[8];
+                    TD->minInterval = timeInterval[0];
+                    TD->averInterval = timeIntervalSum/9.0;
+                    TD->MedianInterval = timeInterval[4];
+                    
+                    double var2 = 0;
+                    for(int i=0; i<9 ;i++){
+                        var2 += ((timeInterval[i]-TD->averInterval)/10000.0)*((timeInterval[i]-TD->averInterval)/10000.0)/9.0;
+                    }
+                    TD->varInterval =sqrt(var2)*10000.0;
+                    memcpy(TD->data,fkey->flow_id,13);
+                    // printf("cul done\n\n\n");
+
+                    char snd_buf[80] = {0};
+                    memcpy(snd_buf,TD,sizeof(*TD));
+                    write(sock, snd_buf, sizeof(snd_buf));
+                    free(TD);
+                }
+                free(fkey);
+                free(packet_1);
+                
+            }
+
+            //丢包率测量
+            myHashSetAddRecvPLRData(Set,node->key,node->flag);
+        }else if(node->packetType = 1){
+
+
+        }
+    }
+    
+}

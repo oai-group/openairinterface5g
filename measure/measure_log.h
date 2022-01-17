@@ -66,6 +66,35 @@ typedef struct insertData{
     insertNode* head;
 }insertData;
 
+
+typedef struct recvPackectHeadNode{
+    uint8_t  key[KEY_LENGTH];
+
+    uint32_t packetLength;//报文长度
+    struct timespec *nowtime;
+
+    uint8_t flag;//丢包率信息
+
+    uint8_t packetType;//正常报文：0 或者  时延报文：1。 正常报文有长度丢包率等信息，时延测量报文没有
+
+    
+    
+
+    DelayData *dData; //正常报文没有
+
+    recvPackectHeadNode *next;
+
+
+}recvPackectHeadNode;
+
+typedef struct tmpRecvData{
+    uint32_t size;
+
+    recvPackectHeadNode *head;
+    recvPackectHeadNode *tail;
+
+}tmpRecvData;
+
 // 0 = send ,1 = recv
 void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type, insertData *inData);
 // void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL *mysql, int type, insertNode *head);
@@ -76,6 +105,8 @@ void mysqldb_delete(MYSQL *mysql, unsigned char *flow_key);
 void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t *mutex,ElasticSketch *elastic_sketch);
 
 void insertDataToDB(insertData* inData,MYSQL *mysql);
+
+void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *elastic_sketch);
 
 #endif
 
