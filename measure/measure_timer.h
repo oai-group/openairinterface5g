@@ -31,7 +31,7 @@ typedef struct timer_param_t
     // int type;
 
     int signal;
-    tmpRecvData *tmp;
+    tmpRecvData tmp;
 }timer_param_t;
 
 timer_param_t timer_param;
@@ -46,6 +46,6 @@ void measure_timer_create(  int time_val,
                             MyHashSet *recv_Set, ElasticSketch *recv_sketch,pthread_mutex_t* recv_mutex,
                             MyHashSet *send_Set, ElasticSketch *send_sketch,pthread_mutex_t* send_mutex,
                             int sock,
-                            int signal,tmpRecvData *tmp);
+                            int signal,tmpRecvData tmp);
 
 #endif

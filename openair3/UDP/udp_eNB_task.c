@@ -82,6 +82,8 @@ ElasticSketch recv_elastic_sketch;
 ElasticSketch send_elastic_sketch;
 
 int sock;
+int signal;
+tmpRecvData tmp;
 // enb id
 uint8_t curr_eNB_id;
 
@@ -327,24 +329,40 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
     
       /////////测量
-      pthread_mutex_lock(&recv_mutex);
-      measure_packet((char *)&udp_data_ind_p->buffer[8], 
-                      &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
-      /////////////
+      if(signal == 0){
+        pthread_mutex_lock(&recv_mutex);
+        measure_packet((char *)&udp_data_ind_p->buffer[8], 
+                        &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
+        loss_measure_recv(udp_data_ind_p, &recvSet);
+        int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+        
+        pthread_mutex_unlock(&recv_mutex);
+        if(flag){
+          return;
+        }
+      }else if(signal == 1){
+        pthread_mutex_lock(&recv_mutex);
+        if(signal == 0){
+          printf("\n signal ==  1 but signal == 0\n\n")
+          // pthread_mutex_lock(&recv_mutex);
+          measure_packet((char *)&udp_data_ind_p->buffer[8], 
+                          &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
+          loss_measure_recv(udp_data_ind_p, &recvSet);
+          int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+          // pthread_mutex_unlock(&recv_mutex);
+          if(flag){
+            return;
+          }
+        }
+        int flag = measure_buffer_staging_recv(udp_data_ind_p, &tmp, message_p, forwarded_buffer);
+        pthread_mutex_unlock(&recv_mutex);
+        if(flag){
+          return;
+        }
+        
 
-      // printf("Before loss_measure_recv\n");
-
-      // 调用丢包率的代码
-      loss_measure_recv(udp_data_ind_p, &recvSet);
-
-      // 调用接收程序丢弃时间戳数据包
-      int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
-      
-      pthread_mutex_unlock(&recv_mutex);
-      // printf("delay_measure_recv flag: %d\n", flag);
-      if(flag){
-        return;
       }
+
       
       // printf("After delay_measure_recv return, flag : %d\n", flag);
     
@@ -691,7 +709,9 @@ int loss_measure_recv(udp_data_ind_t *udp_data_ind_p, MyHashSet *recvSet) {
 
 
 // 在hash表被锁住的时候 将接收的数据的值存放到临时的buffer中
-int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p, recvPacketHeadNode *recv_packet) {
+int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p,tmpRecvData *tmp,MessageDef *message_p,
+                      uint8_t *forwarded_buffer) {
+  
   int is_ipv4_packet;
   packet_key_t packet_key;
   uint8_t flow_key[13]={'0'}; // 存五元组
@@ -702,8 +722,25 @@ int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p, recvPacketHeadNo
   // 不是ipv4的包直接跳过  返回0 表示不是IPv4的包
   if (is_ipv4_packet != 0) return 0;  
 
+  recvPacketHeadNode *recv_packet = (recvPacketHeadNode *)malloc(sizeof(recvPacketHeadNode));
+  if(tmp->size == 0){
+    tmp->head = recv_packet;
+    tmp->tail = recv_packet;
+    tmp->size ++;
+  }else{
+    tmp->tail->next = recv_packet;
+    tmp->size++;
+  }
+  struct timespec *nowtime = (struct timespec *) malloc(sizeof(struct timespec ));
+  // struct timespec nowtime;          
+  clock_gettime(CLOCK_REALTIME, nowtime);
+
+
   // 下面处理的这些包全是ipv4的
   packet_key_to_char(&packet_key, &flow_key);
+  memcpy(recv_packet->key,flow_key,KEY_LENGTH);
+
+
 
   // 将解析的数据放到临时的缓冲区 recv_packet 中
   // 1. 丢包率的标志位 1 or 0
@@ -712,7 +749,7 @@ int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p, recvPacketHeadNo
 
   if ((udp_data_ind_p->buffer[9] & 0x06) == 0x06) {
     // 此时是复制的包
-    recv_packet->packetType = 0;  
+    recv_packet->packetType = 1;  
 
     // 3. 时延数据
     // 获取当前时间
@@ -747,12 +784,21 @@ int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p, recvPacketHeadNo
     dData->count = 1; 
     // 插入时延数据 
     recv_packet->dData = dData;
+
+
+        // 释放内存
+    LOG_W(UDP_, "Drop packets\n");
+    itti_free(TASK_UDP, message_p);
+    itti_free(TASK_UDP, forwarded_buffer);
+    return 1;
   } else {
     // 此时不是复制的包 只需要插入类型1即可 表示当前包不是
-    recv_packet->packetType = 1; 
+    recv_packet->packetType = 0;
+    recv_packet->packetLength = packet_key.packet_len;
+    recv_packet->nowtime = nowtime; 
   }
   
-  return 1; // 返回成功
+  return 0; // 返回成功
 }
 
 
@@ -781,6 +827,9 @@ void *udp_eNB_task(void *args_p)
     // recv_mutex = PTHREAD_MUTEX_INITIALIZER;
     // send_mutex = PTHREAD_MUTEX_INITIALIZER;
   // 数据初始化
+    memset(&tmp,0,sizeof(tmpRecvData));
+    signal = 0;
+    
     Init_ElasticSketch(&recv_elastic_sketch, BUCKET_NUM, LIGHT_PART_COUNTER_NUM);
     initHashSet(myHashCodeString, myEqualString, &recvSet);
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -792,7 +841,7 @@ void *udp_eNB_task(void *args_p)
     // measure_timer_create(5, &sendSet, &send_elastic_sketch,&send_mutex,sock, 0);
     measure_timer_create(5, &recvSet, &recv_elastic_sketch,&recv_mutex,
                         &sendSet, &send_elastic_sketch,&send_mutex,
-                        sock);
+                        sock,signal,tmp);
     // MyHashSet* sendSet = &Set;
     // measure_timer_create(5, &Set, &elastic_sketch,&mutex,sock);
 

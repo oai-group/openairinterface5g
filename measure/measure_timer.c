@@ -138,7 +138,9 @@ void* print_current_time(void* argv){
         save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0,inData);
         pthread_mutex_unlock(send_mutex);
 
+        // pthread_mutex_lock(recv_mutex);
         signal = 1;
+        // pthread_mutex_unlock(recv_mutex);
         // pthread_mutex_lock(recv_mutex);
         printf("recv log\n\n");  
         save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1,inData);  
@@ -204,7 +206,7 @@ void measure_timer_create(  int time_val,
                             MyHashSet *recv_Set, ElasticSketch *recv_sketch,pthread_mutex_t* recv_mutex,
                             MyHashSet *send_Set, ElasticSketch *send_sketch,pthread_mutex_t* send_mutex,
                             int sock,
-                            int signal,tmpRecvData *tmp
+                            int signal,tmpRecvData tmp
                             ){
     pthread_t measure_timer_thread;
 
