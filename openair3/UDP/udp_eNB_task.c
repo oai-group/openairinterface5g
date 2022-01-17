@@ -325,7 +325,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->buffer_length = n;
       udp_data_ind_p->peer_port     = htons(addr.sin_port);
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
-	  
+    
       /////////测量
       pthread_mutex_lock(&recv_mutex);
       measure_packet((char *)&udp_data_ind_p->buffer[8], 
@@ -347,8 +347,8 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       }
       
       // printf("After delay_measure_recv return, flag : %d\n", flag);
-	  
-	  
+    
+    
 
 #if defined(LOG_UDP) && LOG_UDP > 0
       LOG_I(UDP_, "Msg of length %d received from %s:%u\n",
@@ -690,6 +690,73 @@ int loss_measure_recv(udp_data_ind_t *udp_data_ind_p, MyHashSet *recvSet) {
 }
 
 
+// 在hash表被锁住的时候 将接收的数据的值存放到临时的buffer中
+int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p, recvPacketHeadNode *recv_packet) {
+  int is_ipv4_packet;
+  packet_key_t packet_key;
+  uint8_t flow_key[13]={'0'}; // 存五元组
+
+  // is_ipv4_packet = 0; 表示ipv4
+  is_ipv4_packet = extract_packet_key((uint8_t *)(&udp_data_ind_p->buffer[8]), &packet_key);
+  
+  // 不是ipv4的包直接跳过  返回0 表示不是IPv4的包
+  if (is_ipv4_packet != 0) return 0;  
+
+  // 下面处理的这些包全是ipv4的
+  packet_key_to_char(&packet_key, &flow_key);
+
+  // 将解析的数据放到临时的缓冲区 recv_packet 中
+  // 1. 丢包率的标志位 1 or 0
+  recv_packet->flag = (udp_data_ind_p->buffer[8 + 1] & 0x01) == 0x01 ? 1 : 0;
+  // 2. 判断是否是复制的包
+
+  if ((udp_data_ind_p->buffer[9] & 0x06) == 0x06) {
+    // 此时是复制的包
+    recv_packet->packetType = 0;  
+
+    // 3. 时延数据
+    // 获取当前时间
+    current_millisecond = getTimeUsec();
+
+    // 找到有多少个节点的时间戳信息
+    int time_count = (uint8_t)(udp_data_ind_p->buffer[36]);
+
+    // 解析ip数据
+    DelayData * dData = (DelayData *) malloc(sizeof(DelayData));
+    memset(dData, 0, sizeof(DelayData));
+
+    // 循环读取时间戳
+    for (int i = 0; i < time_count - 1; i++) {
+      LinkDelay linkDelay;
+      linkDelay.startNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * i]);
+      linkDelay.endNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * (i + 1)]);
+      linkDelay.delay = *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * (i + 1)]) - *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * i]);
+
+      dData->links[i] = linkDelay;
+    }
+
+    // 单独处理最后一个节点
+    LinkDelay linkDelay;
+    linkDelay.startNode = (uint8_t)(udp_data_ind_p->buffer[37 + 9 * (time_count - 1)]);
+    linkDelay.endNode = curr_eNB_id;
+    linkDelay.delay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38 + 9 * (time_count - 1)]);
+    dData->links[time_count - 1] = linkDelay;
+
+    // 计算总的端到端的时延
+    dData->NodeToNodeDelay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38]);
+    dData->count = 1; 
+    // 插入时延数据 
+    recv_packet->dData = dData;
+  } else {
+    // 此时不是复制的包 只需要插入类型1即可 表示当前包不是
+    recv_packet->packetType = 1; 
+  }
+  
+  return 1; // 返回成功
+}
+
+
+
 void *udp_eNB_task(void *args_p)
 {
   int                 nb_events;
@@ -835,8 +902,8 @@ void *udp_eNB_task(void *args_p)
                 "(%d:%s) May be normal if GTPU kernel module loaded on same host (may NF_DROP IP packet)\n",
                 udp_sd, bytes_written, errno, strerror(errno));
         }
-		
-		
+    
+    
 
         // 发送复制包 测量时延
         if (is_ipv4_packet == 0) {
@@ -850,7 +917,7 @@ void *udp_eNB_task(void *args_p)
           pthread_mutex_unlock(&send_mutex);
         }
 
-		
+    
 
         itti_free(ITTI_MSG_ORIGIN_ID(received_message_p), udp_data_req_p->buffer);
       }
