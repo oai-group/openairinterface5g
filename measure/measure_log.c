@@ -528,10 +528,10 @@ void insertDataToDB(insertData* inData,MYSQL *mysql){
 }
 
 
-void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *elastic_sketch){
-
-    while (tmp.size != 0)
-    {
+void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *elastic_sketch, int num){
+    int count = 0;
+    while (tmp.size != 0&&count<num)
+    {   
         recvPacketHeadNode *node = tmp.head;
         myHashSetAddData(Set, node->key);
 
@@ -541,8 +541,6 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
             */
            //报文大小测量
             if(node->packetLength > 0){
-
-
                 // myHashSetAddData(Set, &flow_key);
                 FIVE_TUPLE *fkey = (FIVE_TUPLE *)malloc(sizeof(FIVE_TUPLE));
 
@@ -628,13 +626,27 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
                 
             }  
         }else if(node->packetType = 1){
-
-
-
-
+            //时延测量
+            myHashSetAddDelayData(Set, node->key, node->dData);
         }
         //丢包率测量
             myHashSetAddRecvPLRData(Set,node->key,node->flag);
+
+
+        tmp.head = node->next;
+        count++;
+        tmp.size--;
+
+        if(tmp.size == 0){
+            tmp.tail = NULL;
+        }
+
+
+        //free node
+        if(node->nowtime){
+            free(node->nowtime);
+        }
+        free(node);
     }
     
 }

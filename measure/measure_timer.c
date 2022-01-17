@@ -24,6 +24,9 @@ void* print_current_time(void* argv){
     pthread_mutex_t* send_mutex = ((timer_param_t*)argv)->send_mutex;
 
     int sock = ((timer_param_t*)argv)->sock;
+
+    int signal = ((timer_param_t*)argv)->signal;
+    tmpRecvData tmp = ((timer_param_t*)argv)->tmp;
     // int type = ((timer_param_t*)argv)->type;
 
     // sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -98,14 +101,31 @@ void* print_current_time(void* argv){
 
     insertData *inData = (insertData *)malloc(sizeof(insertData));
     memset(inData,0,sizeof(insertData));
-    
+
+    // tmpRecvData *tmp = (tmpRecvData *)malloc(sizeof(tmpRecvData));
+    // memset(tmp,0,sizeof(tmpRecvData));
+    clock_t prev_count, now_count;
+    prev_count = clock();
+
 
     while(1){ 
         
         count += 1;
-        sleep(time_val);
-        time(&now);
-        timenow = gmtime(&now);
+        // sleep(time_val);
+        // time(&now);
+        
+        
+        // timenow = gmtime(&now);
+        now_count = clock();
+
+        while ((double)(now_count-prev_count)/CLOCKS_PER_SEC < 5)
+        {
+            usleep(10000);
+            now_count = clock();
+        }
+        prev_count = now_count;
+        
+        
         //睡眠
 
         printf("\nmeasurement module is running, statistics will be saved in /measure_log/statistics_log.txt\n");
@@ -118,13 +138,14 @@ void* print_current_time(void* argv){
         save_flow_statistics(count, send_sketch, send_Set, conn_ptr, 0,inData);
         pthread_mutex_unlock(send_mutex);
 
-
-        pthread_mutex_lock(recv_mutex);
+        signal = 1;
+        // pthread_mutex_lock(recv_mutex);
         printf("recv log\n\n");  
         save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1,inData);  
         
         // save_flow_statistics(count, recv_sketch, recv_Set, conn_ptr, 1);
-        pthread_mutex_unlock(recv_mutex);
+        // pthread_mutex_unlock(recv_mutex);
+        // signal = 0;
 
         end_time = clock();  // 结束时间
         /* 计算得出程序运行时间, 并将其输出到屏幕 */
@@ -134,11 +155,42 @@ void* print_current_time(void* argv){
 
         start_time = clock(); // 开始时间
 
+        clock_t last_time, now_time;
+        last_time = clock();
+        printf("\n tmp has %u data",tmp.size);
+        while (1)
+        {
+            pthread_mutex_lock(recv_mutex);
+            // pthread_mutex_unlock(recv_mutex);
+            while ((double)(now_time - last_time)/ CLOCKS_PER_SEC < 0.005))
+            {
+                /* code */
+                printf("\ninsert store times : %lf ", (double)(now_time - last_time) / CLOCKS_PER_SEC);
+                processTmpPacket(tmp, recv_Set, sock, recv_sketch, 50);
+                now_time = clock();
+            }
+            last_time = now_time;
+            // pthread_mutex_lock(recv_mutex);
+            
+            if(tmp.size == 0){
+                signal = 0;
+                pthread_mutex_unlock(recv_mutex);
+                break;
+            }
+            pthread_mutex_unlock(recv_mutex);
+            usleep(5000);
+        }
+         
+
+
         insertDataToDB(inData,conn_ptr);
         mysql_query(conn_ptr, "COMMIT;");
+
+
         // mysql_commit(&mysql);
         end_time = clock();  // 结束时间
         printf("\ninsert MySQL timestamps : %lf ", (double)(end_time - start_time) / CLOCKS_PER_SEC);
+
         
     }
 
@@ -151,7 +203,9 @@ void* print_current_time(void* argv){
 void measure_timer_create(  int time_val,
                             MyHashSet *recv_Set, ElasticSketch *recv_sketch,pthread_mutex_t* recv_mutex,
                             MyHashSet *send_Set, ElasticSketch *send_sketch,pthread_mutex_t* send_mutex,
-                            int sock){
+                            int sock,
+                            int signal,tmpRecvData *tmp
+                            ){
     pthread_t measure_timer_thread;
 
     timer_param.time_val = time_val;
@@ -166,6 +220,8 @@ void measure_timer_create(  int time_val,
     timer_param.send_mutex = send_mutex;
 
     // timer_param.recv_type = type;
+    timer_param.signal = signal;
+    timer_param.tmp = tmp;
     
     pthread_create(&measure_timer_thread,NULL,print_current_time,&timer_param);
 }

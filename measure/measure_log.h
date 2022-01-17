@@ -106,7 +106,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t *mu
 
 void insertDataToDB(insertData* inData,MYSQL *mysql);
 
-void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *elastic_sketch);
+void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *elastic_sketch,int num);
 
 #endif
 
