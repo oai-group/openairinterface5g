@@ -329,38 +329,31 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
     
       /////////测量
+      int flag;
+      pthread_mutex_lock(&recv_mutex);
       if(signal == 0){
-        pthread_mutex_lock(&recv_mutex);
+        // pthread_mutex_lock(&recv_mutex);
         measure_packet((char *)&udp_data_ind_p->buffer[8], 
                         &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
         loss_measure_recv(udp_data_ind_p, &recvSet);
-        int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+        // int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
+        flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
         
-        pthread_mutex_unlock(&recv_mutex);
-        if(flag){
-          return;
-        }
+        // pthread_mutex_unlock(&recv_mutex);
+        // if(flag){
+        //   return;
+        // }
       }else if(signal == 1){
-        pthread_mutex_lock(&recv_mutex);
-        if(signal == 0){
-          printf("\n signal ==  1 but signal == 0\n\n")
-          // pthread_mutex_lock(&recv_mutex);
-          measure_packet((char *)&udp_data_ind_p->buffer[8], 
-                          &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
-          loss_measure_recv(udp_data_ind_p, &recvSet);
-          int flag = delay_measure_recv(udp_data_ind_p, message_p, forwarded_buffer, &recvSet);
-          // pthread_mutex_unlock(&recv_mutex);
-          if(flag){
-            return;
-          }
-        }
-        int flag = measure_buffer_staging_recv(udp_data_ind_p, &tmp, message_p, forwarded_buffer);
-        pthread_mutex_unlock(&recv_mutex);
+        // pthread_mutex_lock(&recv_mutex);
+        flag = measure_buffer_staging_recv(udp_data_ind_p, &tmp, message_p, forwarded_buffer);
+        // pthread_mutex_unlock(&recv_mutex);
         if(flag){
           return;
         }
-        
-
+      }
+      pthread_mutex_unlock(&recv_mutex);
+      if(flag){
+          return;
       }
 
       
