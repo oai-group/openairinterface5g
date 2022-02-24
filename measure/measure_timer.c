@@ -164,7 +164,7 @@ void* print_current_time(void* argv){
         {
             pthread_mutex_lock(recv_mutex);
             // pthread_mutex_unlock(recv_mutex);
-            while ((double)(now_time - last_time)/ CLOCKS_PER_SEC < 0.005))
+            while ((double)(now_time - last_time)/ CLOCKS_PER_SEC < 0.005)
             {
                 /* code */
                 printf("\ninsert store times : %lf ", (double)(now_time - last_time) / CLOCKS_PER_SEC);
