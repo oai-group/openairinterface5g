@@ -555,7 +555,7 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
                 // PACKET_INFO packet_1;
                 memset(packet_1, 0, sizeof(PACKET_INFO));
                 packet_1->size = node->packetLength;
-                packet_1->arrived_time = node->nowtime;
+                packet_1->arrived_time = *(node->nowtime);
 
                 // printf("\n\n packet set done\n\n");
                 (*elastic_sketch).Insert(elastic_sketch, fkey, packet_1);
