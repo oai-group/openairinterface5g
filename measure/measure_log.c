@@ -75,6 +75,9 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             // fprintf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[8]))));   
             // fprintf(fp,"    %5d\t",htons(*((uint16_t*)&(flow_key[10]))));
             // fprintf(fp," %1d %1d %1d ",node->notReceived,node->isReceived,node->isClassified);
+            printf("\n    %3d.%3d.%3d.%3d   ", flow_key[0],flow_key[1],flow_key[2],flow_key[3]);
+            printf("%3d.%3d.%3d.%3d   ", flow_key[4],flow_key[5],flow_key[6],flow_key[7]);
+            printf("     %1d %1d %1d \n",node->notReceived,node->isReceived,node->isClassified);
 
             FIVE_TUPLE fkey;
             memcpy(fkey.flow_id,flow_key,13);
