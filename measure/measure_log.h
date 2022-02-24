@@ -82,7 +82,7 @@ typedef struct recvPacketHeadNode{
 
     DelayData *dData; //正常报文没有
 
-    recvPacketHeadNode *next;
+    struct recvPacketHeadNode *next;
 
 
 }recvPacketHeadNode;

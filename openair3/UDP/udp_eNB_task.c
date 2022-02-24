@@ -82,7 +82,7 @@ ElasticSketch recv_elastic_sketch;
 ElasticSketch send_elastic_sketch;
 
 int sock;
-int signal;
+int mySignal;
 tmpRecvData tmp;
 // enb id
 uint8_t curr_eNB_id;
@@ -331,7 +331,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       /////////测量
       int flag;
       pthread_mutex_lock(&recv_mutex);
-      if(signal == 0){
+      if(mySignal == 0){
         // pthread_mutex_lock(&recv_mutex);
         measure_packet((char *)&udp_data_ind_p->buffer[8], 
                         &recvSet, sock, &recv_mutex, &recv_elastic_sketch);
@@ -343,7 +343,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
         // if(flag){
         //   return;
         // }
-      }else if(signal == 1){
+      }else if(mySignal == 1){
         // pthread_mutex_lock(&recv_mutex);
         flag = measure_buffer_staging_recv(udp_data_ind_p, &tmp, message_p, forwarded_buffer);
         // pthread_mutex_unlock(&recv_mutex);
@@ -746,7 +746,7 @@ int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p,tmpRecvData *tmp,
 
     // 3. 时延数据
     // 获取当前时间
-    current_millisecond = getTimeUsec();
+    uint64_t current_millisecond = getTimeUsec();
 
     // 找到有多少个节点的时间戳信息
     int time_count = (uint8_t)(udp_data_ind_p->buffer[36]);
@@ -821,7 +821,7 @@ void *udp_eNB_task(void *args_p)
     // send_mutex = PTHREAD_MUTEX_INITIALIZER;
   // 数据初始化
     memset(&tmp,0,sizeof(tmpRecvData));
-    signal = 0;
+    mySignal = 0;
     
     Init_ElasticSketch(&recv_elastic_sketch, BUCKET_NUM, LIGHT_PART_COUNTER_NUM);
     initHashSet(myHashCodeString, myEqualString, &recvSet);
@@ -834,7 +834,7 @@ void *udp_eNB_task(void *args_p)
     // measure_timer_create(5, &sendSet, &send_elastic_sketch,&send_mutex,sock, 0);
     measure_timer_create(5, &recvSet, &recv_elastic_sketch,&recv_mutex,
                         &sendSet, &send_elastic_sketch,&send_mutex,
-                        sock,signal,tmp);
+                        sock,mySignal,tmp);
     // MyHashSet* sendSet = &Set;
     // measure_timer_create(5, &Set, &elastic_sketch,&mutex,sock);
 
