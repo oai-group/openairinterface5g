@@ -185,7 +185,7 @@ void* print_current_time(void* argv){
          
 
 
-        insertDataToDB(inData,conn_ptr);
+        // insertDataToDB(inData,conn_ptr);
         mysql_query(conn_ptr, "COMMIT;");
 
 

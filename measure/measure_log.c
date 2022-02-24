@@ -44,13 +44,13 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             // printf("begin get node \n\n\n");    
             MyNode* node = myHashSetIteratorNext(it);
 
-            insertNode *inHead = (insertNode *) malloc(sizeof(insertNode));
-            memset(inHead,0,sizeof(insertNode));
-            inData->size++;
-            inHead->next = inData->head;
-            inData->head = inHead;
-            memcpy(inHead->key,node->data,KEY_LENGTH);
-            inHead->type = type;
+            // insertNode *inHead = (insertNode *) malloc(sizeof(insertNode));
+            // memset(inHead,0,sizeof(insertNode));
+            // inData->size++;
+            // inHead->next = inData->head;
+            // inData->head = inHead;
+            // memcpy(inHead->key,node->data,KEY_LENGTH);
+            // inHead->type = type;
 
             uint8_t * flow_key = node->data;
 
@@ -84,29 +84,28 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             VAL_TYPE result = sketch->Query(sketch,&fkey);
             //这个周期没收到报文，直接输出0
             if(node->isReceived == 0){
-                    //fprintf(fp,"   %10u\t    %5u", 0, 0);
-                    // mysqldb_insert(mysql, flow_key, 0, 0);
-                    inHead->total_Bytes = 0;
-                    inHead->total_Pkts = 0;
+                    mysqldb_insert(mysql, flow_key, 0, 0);
+                    // inHead->total_Bytes = 0;
+                    // inHead->total_Pkts = 0;
             }
             else{
                 if(node->isClassified == 1){
                     //fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
-                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
 
-                    inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
-                    inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
+                    // inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
+                    // inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
 
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
                     node->totalTime = 0;
                 }
                 else{
-                    inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
-                    inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
+                    // inHead->total_Bytes = result.tot_size/1.0/node->totalTime;
+                    // inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
 
                     //fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
-                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
 
                     t_bytes += result.tot_size/1.0/node->totalTime;
                     t_pkts += result.packet_num/1.0/node->totalTime;
@@ -116,14 +115,14 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
             //清除上个周期的丢包率，时延等统计信息
             if(type == 1 ){
             if(node->delayInfo){
-                // mysqldb_insert_status(mysql, flow_key,
-                //                     node->delayInfo->NodeToNodeDelay/1000.0,
-                //                     node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
+                mysqldb_insert_status(mysql, flow_key,
+                                    node->delayInfo->NodeToNodeDelay/1000.0,
+                                    node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv))); 
 
 
-                inHead->delay = node->delayInfo->NodeToNodeDelay/1000.0;
-                inHead->loss = node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv));
-                inHead->hasDelayInfo = 1;
+                // inHead->delay = node->delayInfo->NodeToNodeDelay/1000.0;
+                // inHead->loss = node->plrData.shouldRecv==0?0:(1.0 - node->plrData.realRecv/((double)node->plrData.shouldRecv));
+                // inHead->hasDelayInfo = 1;
 
                 printf("measure_log 129 -> node->plrData.shouldRecv : %5d\t\n", node->plrData.shouldRecv);
                 printf("measure_log 130 -> node->delayInfo->NodeToNodeDelay : %5ld\t \n", node->delayInfo->NodeToNodeDelay);
