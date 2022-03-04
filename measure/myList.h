@@ -61,6 +61,8 @@ typedef struct myNode
     int isReceived;
     int notReceived;
     int totalTime;
+    int now_pkt_cnt;
+    int now_byte_cnt;
 
     SamplingData samplingData;
 
@@ -107,7 +109,8 @@ void freeMyList(MyList * list);
  
 //插入在尾部
 // void myListInsertDataAtLast(MyList*  list, uint8_t*  data,uint16_t len);
-void myListInsertDataAtLast(MyList*  list, uint8_t*  data);
+// void myListInsertDataAtLast(MyList*  list, uint8_t*  data);
+MyNode *myListInsertDataAtLast(MyList*  list, uint8_t*  data);
 void myListInsertDelayDataAtLast(MyList*  list, uint8_t*  data, DelayData *delayInfo);
 void myListInsertSamplingDataAtLast(MyList *  list, uint8_t*  data);
 

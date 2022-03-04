@@ -107,7 +107,8 @@ int myHashSetIsClassified(MyHashSet *  set, uint8_t*  flow_key)
 
 //增加一条数据,返回是否添加成功
 // int myHashSetAddData(MyHashSet *  set, void *  data)
-int myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
+// int myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
+MyNode * myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
 {
     
     // struct timespec *nowtime = (struct timespec *) malloc(sizeof(struct timespec ));
@@ -129,17 +130,18 @@ int myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
     // printf("\n\n\nreeeee: %d \n\n",re);
     if (re == NULL)
     {
-        myListInsertDataAtLast(set->dataList[hasCode], data);
+        MyNode * ans = myListInsertDataAtLast(set->dataList[hasCode], data);
         // MyNode *node = set->dataList[hasCode]->first;
         (set->size)++;
         free(data);
-        return 1;
+        return ans;
     }
     else{
         re->isReceived = 1;
+        
     }
     free(data);
-    return 0;
+    return re;
 }
 
 //增加一条延迟数据,返回是否添加成功

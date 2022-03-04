@@ -69,6 +69,8 @@ typedef struct PACKET_INFO{
 typedef struct FLOW_INFO{
     uint32_t tot_size;   //流的总的统计大小
     uint32_t packet_num;  //流的总的包数量
+    // uint32_t last_cnt;
+    // uint32_t now_cnt;
     PACKET_INFO top_10_packets[TOP_10_PACKET];  //前10个packet的信息,顺序同索引，即索引0是第1个包，依次类推
     //标志位，用于heavy_part中。为true的流的实际大小计算是heavy_part中的大小+light_part中的大小。
     // 前10个packet：先在light_part中取前10个，不够的由heavy_part补齐。

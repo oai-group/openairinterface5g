@@ -89,7 +89,7 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     // inHead->total_Pkts = 0;
             }
             else{
-                if(node->isClassified == 1){
+                if(node->isClassified == 1 && node->now_cnt==0){
                     //fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
                     mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
 
@@ -105,10 +105,16 @@ void save_flow_statistics(int count, ElasticSketch *sketch,MyHashSet *Set, MYSQL
                     // inHead->total_Pkts = result.packet_num/1.0/node->totalTime;
 
                     //fprintf(fp,"   %10.2f\t    %5.2f", result.tot_size/5.0/node->totalTime,result.packet_num/5.0/node->totalTime);
-                    mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    // mysqldb_insert(mysql, flow_key, result.tot_size/1.0/node->totalTime, result.packet_num/1.0/node->totalTime);
+                    mysqldb_insert(mysql, flow_key, node->now_byte_cnt/1.0, node->now_pkt_cnt/1.0);
 
-                    t_bytes += result.tot_size/1.0/node->totalTime;
-                    t_pkts += result.packet_num/1.0/node->totalTime;
+                    node->now_byte_cnt
+                    t_bytes =  node->now_byte_cnt;
+                    t_pkts =    node->now_pkt_cnt;
+                    node->now_byte_cnt = 0;
+                    node->now_pkt_cnt = 0;
+                    // t_bytes += result.tot_size/1.0/node->totalTime;
+                    // t_pkts += result.packet_num/1.0/node->totalTime;
                 }
             }
             
@@ -402,7 +408,7 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
     if(packet_key.packet_len > 0){
       // printf("\n BYTES num %d\n",packet_key.packet_len);
       //////////////////
-      myHashSetAddData(Set, &flow_key);
+      MyNode * re = myHashSetAddData(Set, &flow_key);
       if((packet[1] & 0x06) == 0x06){
         //   pthread_mutex_unlock(mutex);
           return ;
@@ -429,10 +435,17 @@ void measure_packet(char* packet, MyHashSet * Set, int sock, pthread_mutex_t * m
       (*elastic_sketch).Insert(elastic_sketch, fkey, packet_1);
       
       VAL_TYPE result = (*elastic_sketch).Query(elastic_sketch,fkey);
+      ///////
+      if(re->isClassified==0||re->now_pkt_cnt!=0){
+          re->now_pkt_cnt += 1;
+          re->now_byte_cnt += packet_key.packet_len;
+      }
       
 
-      if(result.packet_num == 10 && !myHashSetIsClassified(Set, &flow_key)){
-          setNodeClassified(Set, &flow_key);
+    //   if(result.packet_num == 10 && !myHashSetIsClassified(Set, &flow_key)){
+        if(result.packet_num == 10 && re->isClassified==0){
+            re->isClassified=1;
+        //   setNodeClassified(Set, &flow_key);
         //  printf("\n\n had 10 packet\n\n");
           TransData *TD = (TransData*)malloc(sizeof(TransData));
           // printf("sizeof(TransData) %d\n\n\n",sizeof(TransData));
@@ -535,7 +548,7 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
     while (tmp.size != 0&&count<num)
     {   
         recvPacketHeadNode *node = tmp.head;
-        myHashSetAddData(Set, node->key);
+        MyNode *re = myHashSetAddData(Set, node->key);
 
         if(node->packetType == 0){
             /*  是普通报文
@@ -563,10 +576,16 @@ void processTmpPacket(tmpRecvData tmp, MyHashSet * Set, int sock,ElasticSketch *
                 (*elastic_sketch).Insert(elastic_sketch, fkey, packet_1);
                 
                 VAL_TYPE result = (*elastic_sketch).Query(elastic_sketch,fkey);
+                if(re->isClassified==0||re->now_pkt_cnt!=0){
+                    re->now_pkt_cnt += 1;
+                    re->now_byte_cnt += node->packetLength;
+                }
                 
 
-                if(result.packet_num == 10 && !myHashSetIsClassified(Set, node->key)){
-                    setNodeClassified(Set, node->key);
+                // if(result.packet_num == 10 && !myHashSetIsClassified(Set, node->key)){
+                if(result.packet_num == 10 && re->isClassified==0){
+                    re->isClassified = 1;
+                    // setNodeClassified(Set, node->key);
                     //  printf("\n\n had 10 packet\n\n");
                     TransData *TD = (TransData*)malloc(sizeof(TransData));
                     // printf("sizeof(TransData) %d\n\n\n",sizeof(TransData));

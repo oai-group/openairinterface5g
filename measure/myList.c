@@ -37,7 +37,7 @@ void freeMyList(MyList * list)
 }
  
 //插入在尾部,通常是新建的一个节点
-void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
+MyNode * myListInsertDataAtLast(MyList *  list, uint8_t*  data)
 {
     
     // printf("begin malloc1 \n\n\n");    
@@ -72,6 +72,7 @@ void myListInsertDataAtLast(MyList *  list, uint8_t*  data)
         list->last = node;
     }
     (list->count)++;
+    return node;
 }
 // 添加时延信息
 void myListInsertDelayDataAtLast(MyList *  list, uint8_t*  data, DelayData *delayInfo)
