@@ -10,6 +10,7 @@
 
 //定时器需要执行的动作
 //测试定时器，每隔一段时间打印一次当前时间
+volatile int mySignal;
 void* print_current_time(void* argv){
     //获取参数，即定时时间
     int count = 0;
@@ -53,7 +54,7 @@ void* print_current_time(void* argv){
 	{
 		printf("Options Set ERRO!\n");
 	}
-	conn_ptr = mysql_real_connect(conn_ptr,"127.0.0.1","root","123456","mytestdb",0,NULL,0);//连接MySQL testdb数据库
+	conn_ptr = mysql_real_connect(conn_ptr,"192.168.1.95","root","123456","mytestdb",0,NULL,0);//连接MySQL testdb数据库
 	if(conn_ptr)
 	{
 		printf("Connection Succeed!\n");
@@ -76,6 +77,8 @@ void* print_current_time(void* argv){
     mysql_real_query(conn_ptr,"truncate table total_send",strlen(query3));
     char query4[100] = "truncate table total_recv";
     mysql_real_query(conn_ptr,"truncate table total_recv",strlen(query4));
+    char query5[100] = "truncate table measure2";
+    mysql_real_query(conn_ptr,"truncate table measure2",strlen(query5));
     printf("have clear table measure, total in mytestdb\n");
     // mysql_commit(&mysql);
     char buf[ 1024 ];
@@ -107,6 +110,7 @@ void* print_current_time(void* argv){
     clock_t prev_count, now_count;
     prev_count = clock();
 
+    mySignal =0;
 
     while(1){ 
         
@@ -116,14 +120,14 @@ void* print_current_time(void* argv){
         
         
         // timenow = gmtime(&now);
-        now_count = clock();
+        // now_count = clock();
 
-        while ((double)(now_count-prev_count)/CLOCKS_PER_SEC < 5)
-        {
-            usleep(10000);
-            now_count = clock();
-        }
-        prev_count = now_count;
+        // while ((double)(now_count-prev_count)/CLOCKS_PER_SEC < 5)
+        // {
+        sleep(5);
+            // now_count = clock();
+        // }
+        // prev_count = now_count;
         
         
         //睡眠
@@ -139,7 +143,8 @@ void* print_current_time(void* argv){
         pthread_mutex_unlock(send_mutex);
 
         // pthread_mutex_lock(recv_mutex);
-        signal = 1;
+        // signal = 1;
+        mySignal = 1;
         // pthread_mutex_unlock(recv_mutex);
         // pthread_mutex_lock(recv_mutex);
         printf("recv log\n\n");  
@@ -159,6 +164,7 @@ void* print_current_time(void* argv){
 
         clock_t last_time, now_time;
         last_time = clock();
+        now_time = last_time;
         printf("\n tmp has %u data",tmp.size);
         while (1)
         {
@@ -167,7 +173,7 @@ void* print_current_time(void* argv){
             while ((double)(now_time - last_time)/ CLOCKS_PER_SEC < 0.005)
             {
                 /* code */
-                printf("\ninsert store times : %lf ", (double)(now_time - last_time) / CLOCKS_PER_SEC);
+                // printf("\ninsert store times : %lf ", (double)(now_time - last_time) / CLOCKS_PER_SEC);
                 processTmpPacket(tmp, recv_Set, sock, recv_sketch, 50);
                 now_time = clock();
             }
@@ -176,6 +182,7 @@ void* print_current_time(void* argv){
             
             if(tmp.size == 0){
                 signal = 0;
+                mySignal = 0;
                 pthread_mutex_unlock(recv_mutex);
                 break;
             }

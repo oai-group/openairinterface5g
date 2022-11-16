@@ -82,13 +82,14 @@ ElasticSketch recv_elastic_sketch;
 ElasticSketch send_elastic_sketch;
 
 int sock;
-int mySignal;
+// volatile int mySignal;
 tmpRecvData tmp;
 // enb id
 uint8_t curr_eNB_id;
 
 static  pthread_mutex_t recv_mutex = PTHREAD_MUTEX_INITIALIZER;
 static  pthread_mutex_t send_mutex = PTHREAD_MUTEX_INITIALIZER;
+//extern volatile int mySignal;
 ///////////////////////////////////////////
 
 // 计算校验和的函数
@@ -329,7 +330,7 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
       udp_data_ind_p->peer_address  = addr.sin_addr.s_addr;
     
       /////////测量
-      int flag;
+      int flag=0;
       pthread_mutex_lock(&recv_mutex);
       if(mySignal == 0){
         // pthread_mutex_lock(&recv_mutex);
@@ -347,9 +348,6 @@ void udp_eNB_receiver(struct udp_socket_desc_s *udp_sock_pP)
         // pthread_mutex_lock(&recv_mutex);
         flag = measure_buffer_staging_recv(udp_data_ind_p, &tmp, message_p, forwarded_buffer);
         // pthread_mutex_unlock(&recv_mutex);
-        if(flag){
-          return;
-        }
       }
       pthread_mutex_unlock(&recv_mutex);
       if(flag){
@@ -660,17 +658,17 @@ int delay_measure_recv(udp_data_ind_t *udp_data_ind_p, MessageDef *message_p,
     // 计算总的端到端的时延
     dData->NodeToNodeDelay = current_millisecond - *(uint64_t *)(&udp_data_ind_p->buffer[38]);
     // 打印计算时延
-    printf("before udp_eNB_task 652 -> dData->NodeToNodeDelay : %lu\n", dData->NodeToNodeDelay);
+    // printf("before udp_eNB_task 652 -> dData->NodeToNodeDelay : %lu\n", dData->NodeToNodeDelay);
 
     packet_key_to_char(&packet_key, &flow_key);
     dData->count = 1;   
     int i = myHashSetAddDelayData(recvSet, flow_key, dData);
     // 打印计算时延
-    printf("after udp_eNB_task 658 -> dData->NodeToNodeDelay : %lu\n", dData->NodeToNodeDelay);
+    // printf("after udp_eNB_task 658 -> dData->NodeToNodeDelay : %lu\n", dData->NodeToNodeDelay);
     
 
     // 释放内存
-    LOG_W(UDP_, "Drop packets\n");
+    // LOG_W(UDP_, "Drop packets\n");
     itti_free(TASK_UDP, message_p);
     itti_free(TASK_UDP, forwarded_buffer);
     return 1;
@@ -780,7 +778,7 @@ int measure_buffer_staging_recv(udp_data_ind_t *udp_data_ind_p,tmpRecvData *tmp,
 
 
         // 释放内存
-    LOG_W(UDP_, "Drop packets\n");
+    // LOG_W(UDP_, "Drop packets\n");
     itti_free(TASK_UDP, message_p);
     itti_free(TASK_UDP, forwarded_buffer);
     return 1;

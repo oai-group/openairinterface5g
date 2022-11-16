@@ -107,8 +107,7 @@ int myHashSetIsClassified(MyHashSet *  set, uint8_t*  flow_key)
 
 //增加一条数据,返回是否添加成功
 // int myHashSetAddData(MyHashSet *  set, void *  data)
-// int myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
-MyNode * myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
+int myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
 {
     
     // struct timespec *nowtime = (struct timespec *) malloc(sizeof(struct timespec ));
@@ -130,18 +129,17 @@ MyNode * myHashSetAddData(MyHashSet *  set, uint8_t*  flow_key)
     // printf("\n\n\nreeeee: %d \n\n",re);
     if (re == NULL)
     {
-        MyNode * ans = myListInsertDataAtLast(set->dataList[hasCode], data);
+        myListInsertDataAtLast(set->dataList[hasCode], data);
         // MyNode *node = set->dataList[hasCode]->first;
         (set->size)++;
         free(data);
-        return ans;
+        return 1;
     }
     else{
         re->isReceived = 1;
-        
     }
     free(data);
-    return re;
+    return 0;
 }
 
 //增加一条延迟数据,返回是否添加成功
@@ -180,7 +178,7 @@ int myHashSetAddDelayData(MyHashSet *  set, uint8_t*  flow_key, DelayData *delay
         }
         re->delayInfo = delayInfo;
         // 打印计算出来的时延信息
-        printf("MyHashSet 179 -> delayInfo->NodeToNodeDelay :  %lu\n", delayInfo->NodeToNodeDelay);
+        // printf("MyHashSet 179 -> delayInfo->NodeToNodeDelay :  %lu\n", delayInfo->NodeToNodeDelay);
 
         // re->isReceived = 1;
     }

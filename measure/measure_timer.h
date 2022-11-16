@@ -17,7 +17,7 @@
 #include <mysql/mysql.h>
 
 
-
+extern volatile int mySignal;
 typedef struct timer_param_t
 {
     int time_val;
