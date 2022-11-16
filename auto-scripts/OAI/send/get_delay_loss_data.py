@@ -3,18 +3,19 @@
 import pymysql
 
 
-def get_and_save_delay():
+def get_and_save_delay(start, end):
     # 建立连接
     conn = pymysql.connect(
         user='root',  # 用户名
         password='123456',  # 密码：这里一定要注意123456是字符串形式
-        host='192.168.1.115',  # 指定访问的服务器，本地服务器指定“localhost”，远程服务器指定服务器的ip地址
+        host='192.168.1.95',  # 指定访问的服务器，本地服务器指定“localhost”，远程服务器指定服务器的ip地址
         database='mytestdb',  # 数据库的名字
         port=3306,  # 指定端口号，范围在0-65535
         charset='utf8mb4',  # 数据库的编码方式
     )
     # sql = 'SELECT sum(totalBytes)*5,sum(totalPkts)*5 from total_send'
-    sql = 'SELECT delay from delayloss'
+    sql = "SELECT value from link_info where linkid='{0}-{1}.delay'".format(start,end)
+    print(sql)
 
     curses = conn.cursor()
     curses.execute(sql)
@@ -23,23 +24,24 @@ def get_and_save_delay():
     for i in res:
         delay_list.append(float(i[0]))
     print(delay_list)
-    with open("delay_cache", 'w') as f:
+    with open("link_delay_cache", 'w') as f:
         for i in delay_list:
             f.write(str(i) + " ")
 
 
-def get_and_save_loss():
+def get_and_save_loss(start, end):
     # 建立连接
     conn = pymysql.connect(
         user='root',  # 用户名
         password='123456',  # 密码：这里一定要注意123456是字符串形式
-        host='192.168.1.115',  # 指定访问的服务器，本地服务器指定“localhost”，远程服务器指定服务器的ip地址
+        host='192.168.1.95',  # 指定访问的服务器，本地服务器指定“localhost”，远程服务器指定服务器的ip地址
         database='mytestdb',  # 数据库的名字
         port=3306,  # 指定端口号，范围在0-65535
         charset='utf8mb4',  # 数据库的编码方式
     )
     # sql = 'SELECT sum(totalBytes)*5,sum(totalPkts)*5 from total_send'
-    sql = 'SELECT loss from delayloss'
+    # sql = 'SELECT loss from delayloss'
+    sql = "SELECT value from link_info where linkid='{0}-{1}.loss'".format(start, end)
 
     curses = conn.cursor()
     curses.execute(sql)
@@ -48,7 +50,7 @@ def get_and_save_loss():
     for i in res:
         delay_list.append(float(i[0]))
     print(delay_list)
-    with open("loss_cache", 'w') as f:
+    with open("link_loss_cache", 'w') as f:
         for i in delay_list:
             f.write(str(i) + " ")
 
@@ -56,12 +58,12 @@ def clear():
     conn = pymysql.connect(
         user='root',  # 用户名
         password='123456',  # 密码：这里一定要注意123456是字符串形式
-        host='192.168.1.115',  # 指定访问的服务器，本地服务器指定“localhost”，远程服务器指定服务器的ip地址
+        host='192.168.1.95',  # 指定访问的服务器，本地服务器指定“localhost”，远程服务器指定服务器的ip地址
         database='mytestdb',  # 数据库的名字
         port=3306,  # 指定端口号，范围在0-65535
         charset='utf8mb4',  # 数据库的编码方式
     )
-    sql = 'truncate table delayloss'
+    sql = 'truncate table link_info'
 
     curses = conn.cursor()
     curses.execute(sql)
@@ -85,16 +87,16 @@ if __name__ == '__main__':
                 base = 20
             n = 0
             d = 0
-            with open("delay_cache", 'r') as f:
+            with open("link_delay_cache", 'r') as f:
                 for line in f.readlines():
                     delay_list = line.split()
                 delay_list = [float(i) for i in delay_list]
                 for delay in delay_list:
-                    if abs(delay - base) < 4:
+                    if abs(delay - base) < 3:
                         n += 1
                         d += delay
-                print(base)
-                print(n)
+                # print(base)
+                # print(n)
                 try:
                     print(str(base) + "ms时延测量平均值为{:.2f}".format(d / n))
                     print(str(base) + "ms时延测量准确率为{:.2f}%".format((1 - abs(d / n - base) / base) * 100))
@@ -108,12 +110,12 @@ if __name__ == '__main__':
                 base = 20
             n = 0
             l = 0
-            with open("loss_cache", 'r') as f:
+            with open("link_loss_cache", 'r') as f:
                 for line in f.readlines():
                     loss_list = line.split()
                 loss_list = [float(i) * 100 for i in loss_list]
                 for loss in loss_list:
-                    if abs(loss - base) < 4:
+                    if abs(loss - base) < 3:
                         n += 1
                         l += loss
                 try:
@@ -122,7 +124,9 @@ if __name__ == '__main__':
                 except:
                     print("没有有效数据")
         if content == 5:
-            get_and_save_delay()
-            get_and_save_loss()
+            start = int(input("请输入起始点"))
+            end = int(input("请输入终止点"))
+            get_and_save_delay(start,end)
+            get_and_save_loss(start,end)
         if content == 9:
             clear()
